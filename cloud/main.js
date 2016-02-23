@@ -467,7 +467,7 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
         sharedJurisSettingsQ.find().then(function(sjsObjs) {
             for (var i = 0; i < sjsObjs.length; i ++) {
                 var jurisdiction = sjsObjs[i].get("Jurisdiction");
-                sharedWithJurisArr.push(jurisdiction);
+                sharedWithJurisArr.push(jurisdiction + "-ALEX");
             }
              
             var sharedByArr = [];
