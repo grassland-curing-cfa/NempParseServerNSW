@@ -2781,6 +2781,7 @@ Parse.Cloud.define("finaliseDataOnParse", function(request, response) {
  * Retrieve all Finalise Date based on the "updatedAt" column of the GCUR_FINALISEMODEL class
  */
 Parse.Cloud.define("getAllFinalisedDate", function(request, response) {
+    console.log("*** Cloud function getAllFinalisedDate called.");
     Parse.Cloud.useMasterKey();
      
     var finaliseModelList = [];
