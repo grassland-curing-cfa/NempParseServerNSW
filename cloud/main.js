@@ -2781,7 +2781,7 @@ Parse.Cloud.define("finaliseDataOnParse", function(request, response) {
  * Retrieve all Finalise Date based on the "updatedAt" column of the GCUR_FINALISEMODEL class
  */
 Parse.Cloud.define("getAllFinalisedDate", function(request, response) {
-    console.log("*** Cloud function getAllFinalisedDate called. Updated 10:39 24/02/2016");
+    console.log("*** Cloud function getAllFinalisedDate called. Updated 10:39 24/02/2016. MONGOLAB URL:" + process.env.MONGOLAB_URI);
     Parse.Cloud.useMasterKey();
      
     var finaliseModelList = [];
@@ -2794,6 +2794,7 @@ Parse.Cloud.define("getAllFinalisedDate", function(request, response) {
     queryFinaliseModel.limit(1000);
      
     queryFinaliseModel.find().then(function(results) {
+	   console.log("*** getAllFinalisedDate, Job count:" + results.length);
         for (var i = 0; i < results.length; i ++) {
             var finaliseModel = results[i];
              
