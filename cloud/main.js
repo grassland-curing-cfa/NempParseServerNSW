@@ -456,7 +456,7 @@ Parse.Cloud.beforeSave("GCUR_LOCATION", function(request, response) {
  * Populate all ShareBy{STATE} columns available by "True" beforeSave a new Observation is added
  */
 Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
-    console.log("beforeSave called on GCUR_OBSERVATION");
+    console.log("FLAG 1 - beforeSave called on GCUR_OBSERVATION");
     Parse.Cloud.useMasterKey();
     sharedWithJurisArr = [];
      
@@ -478,7 +478,7 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
                     "sh" : true
                 });
             }
-             
+		 console.log("FLAG 2 - beforeSave called on GCUR_OBSERVATION");
             request.object.set("SharedBy", JSON.stringify(sharedByArr));
              
             response.success();
