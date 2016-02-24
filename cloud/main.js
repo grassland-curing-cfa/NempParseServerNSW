@@ -456,7 +456,6 @@ Parse.Cloud.beforeSave("GCUR_LOCATION", function(request, response) {
  * Populate all ShareBy{STATE} columns available by "True" beforeSave a new Observation is added
  */
 Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
-    console.log("FLAG 1 - beforeSave called on GCUR_OBSERVATION");
     Parse.Cloud.useMasterKey();
     sharedWithJurisArr = [];
      
@@ -478,7 +477,6 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
                     "sh" : true
                 });
             }
-		 console.log("FLAG 2 - beforeSave called on GCUR_OBSERVATION");
             request.object.set("SharedBy", JSON.stringify(sharedByArr));
              
             response.success();
@@ -2781,7 +2779,6 @@ Parse.Cloud.define("finaliseDataOnParse", function(request, response) {
  * Retrieve all Finalise Date based on the "updatedAt" column of the GCUR_FINALISEMODEL class
  */
 Parse.Cloud.define("getAllFinalisedDate", function(request, response) {
-    console.log("*** Cloud function getAllFinalisedDate called.");
     Parse.Cloud.useMasterKey();
      
     var finaliseModelList = [];
