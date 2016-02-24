@@ -467,7 +467,7 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
         sharedJurisSettingsQ.find().then(function(sjsObjs) {
             for (var i = 0; i < sjsObjs.length; i ++) {
                 var jurisdiction = sjsObjs[i].get("Jurisdiction");
-                sharedWithJurisArr.push(jurisdiction + "-ALEX");
+                sharedWithJurisArr.push(jurisdiction);
             }
              
             var sharedByArr = [];
@@ -2781,7 +2781,7 @@ Parse.Cloud.define("finaliseDataOnParse", function(request, response) {
  * Retrieve all Finalise Date based on the "updatedAt" column of the GCUR_FINALISEMODEL class
  */
 Parse.Cloud.define("getAllFinalisedDate", function(request, response) {
-    console.log("*** Cloud function getAllFinalisedDate called. Updated 10:39 24/02/2016. MONGOLAB URL:" + process.env.MONGOLAB_URI);
+    console.log("*** Cloud function getAllFinalisedDate called.");
     Parse.Cloud.useMasterKey();
      
     var finaliseModelList = [];
@@ -2794,7 +2794,6 @@ Parse.Cloud.define("getAllFinalisedDate", function(request, response) {
     queryFinaliseModel.limit(1000);
      
     queryFinaliseModel.find().then(function(results) {
-	   console.log("*** getAllFinalisedDate, Job count:" + results.length);
         for (var i = 0; i < results.length; i ++) {
             var finaliseModel = results[i];
              
@@ -2821,8 +2820,6 @@ Parse.Cloud.define("getAllFinalisedDate", function(request, response) {
  * Get the downloadable observation report based on user-specified finalised model objectId
  */
 Parse.Cloud.define("getDataReport", function(request, response) {
-    console.log("*** Cloud function getDataReport called from GitHub main.js. Updated 11:36 24/02/2016. MONGOLAB URL:" + process.env.MONGOLAB_URI);
-
     Parse.Cloud.useMasterKey();
      
     var finalisedModelObjectId = request.params.finalisedModelObjectId;
