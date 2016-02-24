@@ -2821,6 +2821,8 @@ Parse.Cloud.define("getAllFinalisedDate", function(request, response) {
  * Get the downloadable observation report based on user-specified finalised model objectId
  */
 Parse.Cloud.define("getDataReport", function(request, response) {
+    console.log("*** Cloud function getDataReport called from GitHub main.js. Updated 11:36 24/02/2016. MONGOLAB URL:" + process.env.MONGOLAB_URI);
+
     Parse.Cloud.useMasterKey();
      
     var finalisedModelObjectId = request.params.finalisedModelObjectId;
