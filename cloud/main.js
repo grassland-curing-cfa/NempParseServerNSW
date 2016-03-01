@@ -37,6 +37,21 @@ Parse.Cloud.define("getDateInAEST", function(request, response) {
     var currentDateInAEST = getTodayString(_IS_DAYLIGHT_SAVING);
     response.success("Current Date in AEST: '" + currentDateInAEST + "'");
 });
+
+Parse.Cloud.define("testMailgunJS", function(request, response) {
+  var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
+  
+  var data = {
+    from: 'Excited User <me@samples.mailgun.org>',
+    to: 'a.chen@cfa.vic.gov.au',
+    subject: 'Hello',
+    text: 'Testing some Mailgun awesomness!'
+  };
+  
+  mailgun.messages().send(data, function (error, body) {
+    console.log(body);
+  });
+});
  
 // Send a "Want to become an observer" email via Mailgun
 Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) {
