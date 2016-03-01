@@ -50,9 +50,9 @@ Parse.Cloud.define("testMailgunJS", function(request, response) {
   
   mailgun.messages().send(data, function (error, body) {
     if (error)
-      response.error("Received an error:" + error);    
+      response.error("" + error);    
     else
-      response.success(body);
+      response.success("" + body);
   });
 });
  
