@@ -52,7 +52,7 @@ Parse.Cloud.define("testMailgunJS", function(request, response) {
     if (error)
       response.error("" + error);    
     else
-      response.success("" + body);
+      response.success(body);
   });
 });
  
