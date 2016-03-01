@@ -4,8 +4,8 @@
  */
 
 var _ = require('underscore');
-var SUPERUSER = "superuser";
-var SUPERPASSWORD = "Passw0rd";
+var SUPERUSER = process.env.SUPER_USER;
+var SUPERPASSWORD = process.env.SUPER_USER_PASS;
 var NULL_VAL_INT = -1;
 var NULL_VAL_DBL = -1.0;
  
