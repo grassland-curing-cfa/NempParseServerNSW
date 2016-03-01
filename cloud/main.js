@@ -49,7 +49,7 @@ Parse.Cloud.define("testMailgunJS", function(request, response) {
   };
   
   mailgun.messages().send(data, function (error, body) {
-    response.success(body);
+    response.success("error=" + error + "; body=" + body);
   });
 });
  
