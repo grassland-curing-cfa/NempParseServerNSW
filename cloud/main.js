@@ -12,8 +12,8 @@ var NULL_VAL_DBL = -1.0;
 var APP_ID = process.env.APP_ID;
 var MASTER_KEY = process.env.MASTER_KEY;
  
-var MG_DOMAIN = 'sandbox72753f1629ce4624804952fa8953d193.mailgun.org';
-var MG_KEY = 'key-ef9829f1ee460b7753bd7e8589aa7964';
+var MG_DOMAIN = process.env.MG_DOMAIN;
+var MG_KEY = process.env.MG_KEY;
 var CFA_NEMP_EMAIL = 'grasslandcuring-nemp@cfa.vic.gov.au';
 var CFA_GL_TEAM_EMAIL = 'grassland-team@cfa.vic.gov.au';
 var RFS_REPORTS_EMAIL = 'grassland.reports@rfs.nsw.gov.au';
