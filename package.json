@@ -9,10 +9,10 @@
   },
   "license": "MIT",
   "dependencies": {
-    "express": "~4.2.x",
+    "express": "~4.11.x",
     "kerberos": "~0.0.x",
-    "parse": "~1.6.12",
-    "parse-server": "~2.1.2",
+    "parse": "~1.8.0",
+    "parse-server": "~2.2.2",
     "underscore": "~1.8.3",
     "mailgun-js": "^0.7.7",
     "cors": "*"
