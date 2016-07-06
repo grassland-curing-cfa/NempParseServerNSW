@@ -30,7 +30,7 @@ var JOB_END_TIME = '10:15 PM';      // GMT in Daylight Saving, "11:15 PM" not in
 // For example:
 Parse.Cloud.define("hello", function(request, response) {
   console.log(APP_ID + "," + MASTER_KEY);
-  response.success("Hello world from " + process.env.APP_NAME);
+  response.success("Hello world from " + process.env.SERVER_URL);
 });
  
 Parse.Cloud.define("getDateInAEST", function(request, response) {
