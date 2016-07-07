@@ -837,7 +837,7 @@ Parse.Cloud.beforeDelete("GCUR_FINALISEMODEL", function(request, response) {
     console.log(file.name());
     Parse.Cloud.httpRequest({
       method: 'DELETE',
-      url: "https://api.parse.com/1/files/" + fileName,
+      url: "https://nemp-nsw-test.herokuapp.com/parse/files/" + fileName,
       headers: {
         "X-Parse-Application-Id": APP_ID,
         "X-Parse-Master-Key" : MASTER_KEY
