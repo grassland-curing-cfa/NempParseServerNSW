@@ -46,8 +46,10 @@ Parse.Cloud.define("testMailgunJS", function(request, response) {
   var data = {
     from: 'Excited User <me@samples.mailgun.org>',
     to: 'a.chen@cfa.vic.gov.au',
+    bcc: 'tttchen2004@yahoo.com',
     subject: 'Hello from ' + process.env.SERVER_URL,
-    text: 'Testing some Mailgun awesomness from ' + process.env.SERVER_URL
+    text: '',
+    html: 'Testing some Mailgun awesomness from <br><h1>' + process.env.SERVER_URL + '</h1>'
   };
   
   mailgun.messages().send(data, function (error, body) {
