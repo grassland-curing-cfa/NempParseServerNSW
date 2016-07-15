@@ -207,7 +207,7 @@ Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) 
       //to: RFS_FBA,
       to: CFA_NEMP_EMAIL,
       bcc: CFA_NEMP_EMAIL,
-      subject: "Express of Interest to become a grassland curing observer",
+      subject: "Express of Interest to become a grassland curing observer - TEST - PLEASE IGNORE THIS EMAIL",
       text: '',
       html: html1
     }, function (error, body) {
