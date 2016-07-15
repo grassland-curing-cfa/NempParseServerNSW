@@ -204,7 +204,8 @@ Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) 
 
     mailgun.messages().send({
       from: CFA_NEMP_EMAIL,
-      to: RFS_FBA,
+      //to: RFS_FBA,
+      to: CFA_NEMP_EMAIL,
       bcc: CFA_NEMP_EMAIL,
       subject: "Express of Interest to become a grassland curing observer",
       text: '',
@@ -386,7 +387,8 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", function(request, respon
         */
         mailgun.messages().send({
           from: RFS_FBA,
-          to: RFS_FBA,
+          //to: RFS_FBA,
+          to: CFA_NEMP_EMAIL,
           bcc: CFA_NEMP_EMAIL + ";" + CFA_GL_EMAIL + ";",
           subject: "New South Wales Grassland Curing Map - " + strToday,
           text: '',
