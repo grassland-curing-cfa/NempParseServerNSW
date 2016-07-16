@@ -6,7 +6,7 @@
  */
 
 var _ = require('underscore');
-var schedule = require('node-schedule');
+var schedule = require('node-schedule');	// https://www.npmjs.com/package/node-schedule
 
 var SUPERUSER = process.env.SUPER_USER;
 var SUPERPASSWORD = process.env.SUPER_USER_PASS;
