@@ -6,6 +6,8 @@
  */
 
 var _ = require('underscore');
+var cron = require('node-cron');
+
 var SUPERUSER = process.env.SUPER_USER;
 var SUPERPASSWORD = process.env.SUPER_USER_PASS;
 var NULL_VAL_INT = -1;
@@ -59,6 +61,10 @@ Parse.Cloud.define("testMailgunJS", function(request, response) {
     else
       response.success(body);
   });
+});
+
+cron.schedule('* * * * *', function(){
+  console.log('running a task every minute');
 });
 
 // Parse.com Job for sending Request for Validation email
