@@ -22,7 +22,8 @@ var MG_KEY = process.env.MG_KEY;
 var CFA_NEMP_EMAIL = 'grasslandcuring-nemp@cfa.vic.gov.au';
 var CFA_GL_EMAIL = 'grassland@cfa.vic.gov.au';
 var RFS_FBA = 'FBA@rfs.nsw.gov.au';
-var _IS_DAYLIGHT_SAVING = (process.env.IS_DAYLIGHT_SAVING == "1" ? true : false);;     // boolean indicates if it is now in Daylight Saving time
+var _IS_DAYLIGHT_SAVING = (process.env.IS_DAYLIGHT_SAVING == "1" ? true : false);     		// boolean indicates if it is now in Daylight Saving time
+var _IS_FIRE_DANGER_PERIOD = (process.env.IS_FIRE_DANGER_PERIOD == "1" ? true : false);     	// boolean indicates if it is now in the Fire Danger Period
 //var JOB_START_TIME = '09:45 PM';    // GMT in Daylight Saving, "10:45 PM" not in Daylight Saving
 //var JOB_END_TIME = '10:15 PM';      // GMT in Daylight Saving, "11:15 PM" not in Daylight Saving
 var MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS = 30;		// An obs with the FinalisedDate older than this number should not be returned and treated as Last Season data
@@ -60,15 +61,81 @@ Parse.Cloud.define("testMailgunJS", function(request, response) {
   });
 });
 
-var j = schedule.scheduleJob({hour: 12, minute: 00, dayOfWeek: 6}, function(){
-  console.log('Time for tea!');
-});
-
 // Parse.com Job for sending Request for Validation email
 /******
 Period other than daylight saving days: 11.00 pm (GMT) Wed - this is equivalent to Thursday 9.00 am (AEST, GMT+10);
 For Daylight Saving, 10.00 pm (GMT) = 9.00 am (GMT+11)
 ******/
+var j = schedule.scheduleJob({hour: 1, minute: 5, dayOfWeek: 1}, function(){
+	console.log('Scheduled Job [jobRequestForValidation] being executed...');
+	
+	if (_IS_FIRE_DANGER_PERIOD) {
+		var toPerson = process.env.VALIDATION_NOTIF_TO_PERSON;
+		var toEmails = process.env.VALIDATION_NOTIF_TO_EMAILS;
+
+		var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
+		
+		var html = '<!DOCTYPE html><html>' + 
+			'<head>' + 
+			'<title>Request For Validation</title>' + 
+			'<style>' + 
+			'p, li {margin:0cm; margin-bottom:.0001pt; font-size:11.0pt; font-family:"Calibri","sans-serif";}' + 
+			'</style>' + 
+			'</head>' + 
+			'<body>' + 
+			'<p>Good morning ' + toPerson + ',</p>' + 
+			'<br>' + 
+			'<p>Grassland curing data for NSW is now ready for checking. To validate the ground observations, please log onto the Grassland Curing Online System ' + 
+			'<a href="http://nemp-nsw.appspot.com">http://nemp-nsw.appspot.com</a>.</p>' + 
+			'<br>' + 
+			'<p>The Grassland Curing Online System has been developed as part of the ongoing project goals of an easy-to-use, user-friendly, reliable and automated system. To use the system:</p>' + 
+			'<br>' + 
+			'<ul>' + 
+			'<li>Log in with the username and password provided to you (Please make sure you use Internet Explorer 9 or above, Firefox or Google Chrome)</li>' + 
+			'<li>Make sure you are with the "Validators" role. You may need to select it from the drop-down list on the top right if you have multiple roles assigned.</li>' + 
+			'<li>Click "Validate Observations"</li>' + 
+			'<li>Amend the curing value using the drop-down list for each location</li>' + 
+			'<li>Click the "Back" button on the top to go back</li>' + 
+			'<li>Log out</li>' + 
+			'</ul>' + 
+			'<br>' + 
+			'<p>You can always reach the full system help by clicking the "Help" button on the bottom.</p>' + 
+			'<br>' + 
+			'<p>If you have any questions, please contact us (Susan - 03 8822 8059; Danni - 03 8822 8073; Alex - 03 8822 8060; Rachel - 03 9262 8607).</p>' + 
+			'<br>' + 
+			'<p>Kind Regards,</p>' + 
+			'<br>' + 
+			'<p>The NEMP Grassland Curing Team</p>' + 
+			'<br>' + 
+			'<table><tr><td width="30%"><img src="http://www.cfa.vic.gov.au/img/logo.png" width="64" height="64" alt="CFA_LOGO" /></td>' + 
+			'<td><p style="color:#C00000; font-weight: bold;">NEMP Grassland Curing Team</p><p>CFA HQ - Fire & Emergency Management - 8 Lakeside Drive, Burwood East, Victoria, 3151</p>' + 
+			'<p>E: <a href="mailto:grasslandcuring-nemp@cfa.vic.gov.au" target="_top">grasslandcuring-nemp@cfa.vic.gov.au</a></p></td></tr></table>' + 
+			'<br>' + 
+			'<p><i>Note: This email has been generated automatically by the NSW RFS Fuel State App.</i></p>' + 
+			'</body>' + 
+			'</html>';
+
+		var data = {
+			to: toEmail,
+			cc: CFA_NEMP_EMAIL,
+			from: CFA_NEMP_EMAIL,
+			subject: "Grassland Curing Validation Notification",
+			text: "",
+			html: html
+		};
+
+		mailgun.messages().send(data, function (error, body) {
+			if (error)
+				response.error("" + error);    
+			else
+				response.success(body);
+		});
+
+
+	}
+});
+
+
 /*
 Parse.Cloud.job("jobRequestForValidation", function(request, status) {
 	status.message("Scheduled Job [jobRequestForValidation] being executed...");
