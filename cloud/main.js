@@ -1,8 +1,10 @@
 /*
- * Cloud code for "nemp-nsw-dev" connected to the "nemp_nsw_test" MongoLab DB deployed on Heroku
+ * Cloud code for "nemp-nsw-dev" connected to the "nemp_dev_nsw" MongoLab DB deployed on Heroku
  * Git repo: 				https://github.com/grassland-curing-cfa/NempParseServerNSW
  * Heroku app: 				https://nemp-nsw-dev.herokuapp.com/parse
  * Initial checkin date: 		23/02/2016
+ * Following-up check date:	13/07/2016
+                                18/07/2016
  */
 
 var _ = require('underscore');
