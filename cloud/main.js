@@ -37,7 +37,7 @@ Parse.Cloud.define("hello", function(request, response) {
  
 Parse.Cloud.define("getDateInAEST", function(request, response) {
     var currentDateInAEST = getTodayString(_IS_DAYLIGHT_SAVING);
-    response.success("Current Date in AEST: '" + currentDateInAEST + "'");
+    response.success("_IS_DAYLIGHT_SAVING is " + _IS_DAYLIGHT_SAVING + "; Current Date in AEST: '" + currentDateInAEST + "'");
 });
 
 Parse.Cloud.define("testMailgunJS", function(request, response) {
