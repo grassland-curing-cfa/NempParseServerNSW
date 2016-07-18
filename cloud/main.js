@@ -116,7 +116,7 @@ var j = schedule.scheduleJob({hour: 1, minute: 5, dayOfWeek: 1}, function(){
 			'</html>';
 
 		var data = {
-			to: toEmail,
+			to: toEmails,
 			cc: CFA_NEMP_EMAIL,
 			from: CFA_NEMP_EMAIL,
 			subject: "Grassland Curing Validation Notification",
