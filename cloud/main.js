@@ -66,7 +66,7 @@ Parse.Cloud.define("testMailgunJS", function(request, response) {
 Period other than daylight saving days: 11.00 pm (GMT) Wed - this is equivalent to Thursday 9.00 am (AEST, GMT+10);
 For Daylight Saving, 10.00 pm (GMT) = 9.00 am (GMT+11)
 ******/
-var j = schedule.scheduleJob({hour: 1, minute: 25, dayOfWeek: 1}, function(){
+var j = schedule.scheduleJob({hour: 23, minute: 0, dayOfWeek: 3}, function(){
 	console.log('Scheduled Job [jobRequestForValidation] being executed...');
 	
 	if (_IS_FIRE_DANGER_PERIOD) {
@@ -136,82 +136,6 @@ var j = schedule.scheduleJob({hour: 1, minute: 25, dayOfWeek: 1}, function(){
 	else
 		console.log("_IS_FIRE_DANGER_PERIOD: " + _IS_FIRE_DANGER_PERIOD + "; No RequestForValidation email to be sent.");
 });
-
-
-/*
-Parse.Cloud.job("jobRequestForValidation", function(request, status) {
-	status.message("Scheduled Job [jobRequestForValidation] being executed...");
-	
-	if (isToSendRequestForValidationEmail()) {
-	
-		var toPerson = request.params.toPerson;
-		var toEmail = request.params.toEmail;
-		
-		var Mailgun = require('mailgun');
-		Mailgun.initialize(MG_DOMAIN, MG_KEY);
-		
-		var html = '<!DOCTYPE html><html>' + 
-			'<head>' + 
-			'<title>Request For Validation</title>' + 
-			'<style>' + 
-			'p, li {margin:0cm; margin-bottom:.0001pt; font-size:11.0pt; font-family:"Calibri","sans-serif";}' + 
-			'</style>' + 
-			'</head>' + 
-			'<body>' + 
-			'<p>Good morning ' + toPerson + ',</p>' + 
-			'<br>' + 
-			'<p>Grassland curing data for NSW is now ready for checking. To validate the ground observations, please log onto the Grassland Curing Online System ' + 
-			'<a href="http://nemp-nsw.appspot.com">http://nemp-nsw.appspot.com</a>.</p>' + 
-			'<br>' + 
-			'<p>The Grassland Curing Online System has been developed as part of the ongoing project goals of an easy-to-use, user-friendly, reliable and automated system. To use the system:</p>' + 
-			'<br>' + 
-			'<ul>' + 
-			'<li>Log in with the username and password provided to you (Please make sure you use Internet Explorer 9 or above, Firefox or Google Chrome)</li>' + 
-			'<li>Make sure you are with the "Validators" role. You may need to select it from the drop-down list on the top right if you have multiple roles assigned.</li>' + 
-			'<li>Click "Validate Observations"</li>' + 
-			'<li>Amend the curing value using the drop-down list for each location</li>' + 
-			'<li>Click the "Back" button on the top to go back</li>' + 
-			'<li>Log out</li>' + 
-			'</ul>' + 
-			'<br>' + 
-			'<p>You can always reach the full system help by clicking the "Help" button on the bottom.</p>' + 
-			'<br>' + 
-			'<p>If you have any questions, please contact us (Susan - 03 8822 8059; Danni - 03 8822 8073; Alex - 03 8822 8060; Rachel - 03 9262 8607).</p>' + 
-			'<br>' + 
-			'<p>Kind Regards,</p>' + 
-			'<br>' + 
-			'<p>The NEMP Grassland Curing Team</p>' + 
-			'<br>' + 
-			'<table><tr><td width="30%"><img src="http://www.cfa.vic.gov.au/img/logo.png" width="64" height="64" alt="CFA_LOGO" /></td>' + 
-			'<td><p style="color:#C00000; font-weight: bold;">NEMP Grassland Curing Team</p><p>CFA HQ - Fire & Emergency Management - 8 Lakeside Drive, Burwood East, Victoria, 3151</p>' + 
-			'<p>E: <a href="mailto:grasslandcuring-nemp@cfa.vic.gov.au" target="_top">grasslandcuring-nemp@cfa.vic.gov.au</a></p></td></tr></table>' + 
-			'<br>' + 
-			'<p><i>Note: This email has been generated automatically by the NSW RFS Fuel State App.</i></p>' + 
-			'</body>' + 
-			'</html>';
-		
-		Mailgun.sendEmail({
-			  to: toEmail,
-			  cc: CFA_NEMP_EMAIL,
-			  from: CFA_NEMP_EMAIL,
-			  subject: "Grassland Curing Validation Notification",
-			  text: "",
-			  html: html
-			}, {
-			  success: function(httpResponse) {
-			    console.log(httpResponse);
-			    status.success("Request for Validation email sent successfully.");
-			  },
-			  error: function(httpResponse) {
-			    console.error(httpResponse);
-			    status.error("Uh oh, something went wrong with sending Request for Validation email.");
-			  }
-		});
-	} else {
-		status.success("Job executed but Request for Validation email NOT sent due to invalid date and time.");
-	}
-});
-*/
  
 // Send a "Want to become an observer" email via Mailgun
 Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) {
@@ -257,26 +181,6 @@ Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) 
     '<p><i>Note: This email has been generated automatically by the NSW Rural Fire Service Grassland Fuel Portal. Please do not reply to this email.</i></p>' + 
     '</body>' + 
     '</html>';
-     
-    /*
-    Mailgun.sendEmail({
-          to: RFS_FBA,
-          bcc: CFA_NEMP_EMAIL,
-          from: CFA_NEMP_EMAIL,
-          subject: "Express of Interest to become a grassland curing observer",
-          text: "",
-          html: html1
-    }, {
-          success: function(httpResponse) {
-            console.log(httpResponse);
-            response.success("Email sent. Details: " + httpResponse.text);
-          },
-          error: function(httpResponse) {
-            console.error(httpResponse);
-            response.error("Uh oh, something went wrong");
-          }
-    });
-    */
 
     mailgun.messages().send({
       from: CFA_NEMP_EMAIL,
@@ -292,26 +196,6 @@ Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) 
       else
         response.success(body);
     });
-    
-    /*
-    Mailgun.sendEmail({
-          to: email,
-          bcc: CFA_NEMP_EMAIL,
-          from: RFS_FBA,
-          subject: "Welcome to the NSW Rural Fire Service Grassland Fuel Portal.",
-          text: "",
-          html: html2
-    }, {
-          success: function(httpResponse) {
-            console.log(httpResponse);
-            response.success("Email sent. Details: " + httpResponse.text);
-          },
-          error: function(httpResponse) {
-            console.error(httpResponse);
-            response.error("Uh oh, something went wrong");
-          }
-    });
-    */
 
     mailgun.messages().send({
       from: RFS_FBA,
@@ -369,26 +253,7 @@ Parse.Cloud.define("sendEmailWelcomeNewUser", function(request, response) {
     '<p><i>Note: This email has been generated automatically by the NSW Rural Fire Service Grassland Fuel Portal. Please do not reply to this email.</i></p>' + 
     '</body>' + 
     '</html>';
-     
-    /*
-    Mailgun.sendEmail({
-          to: email,
-          bcc: CFA_NEMP_EMAIL,
-          from: CFA_NEMP_EMAIL,
-          subject: "Welcome to the NSW Grassland Curing Trial",
-          text: "",
-          html: html
-        }, {
-          success: function(httpResponse) {
-            console.log(httpResponse);
-            response.success("Email sent. Details: " + httpResponse.text);
-          },
-          error: function(httpResponse) {
-            console.error(httpResponse);
-            response.error("Uh oh, something went wrong");
-          }
-        });
-    */
+
     mailgun.messages().send({
       from: CFA_NEMP_EMAIL,
       to: email,
@@ -440,27 +305,7 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", function(request, respon
         '<p><i>Note: This email has been generated automatically by the NSW Rural Fire Service Grassland Fuel Portal. Please do not reply to this email.</i></p>' + 
         '</body>' + 
         '</html>';
-         
-        /*
-        Mailgun.sendEmail({
-              to: RFS_FBA,
-              //bcc: recipientList,
-              bcc: CFA_NEMP_EMAIL + ";" + CFA_GL_EMAIL + ";",
-              from: RFS_FBA,
-              subject: "New South Wales Grassland Curing Map - " + strToday,
-              text: "",
-              html: html
-            }, {
-              success: function(httpResponse) {
-                console.log(httpResponse);
-                response.success("Email sent. Details: " + httpResponse.text);
-              },
-              error: function(httpResponse) {
-                console.error(httpResponse);
-                response.error("Uh oh, something went wrong");
-              }
-        });
-        */
+
         mailgun.messages().send({
           from: RFS_FBA,
           //to: RFS_FBA,
@@ -480,10 +325,6 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", function(request, respon
     }, function(error) {
         response.error("GCUR_MMR_USER_ROLE table lookup failed");
     });
-     
-    /*
-     
-    */
 });
  
 Parse.Cloud.define("countOfObservations", function(request, response) {
