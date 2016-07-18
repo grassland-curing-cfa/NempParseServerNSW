@@ -1,12 +1,12 @@
 /*
  * Cloud code for "nemp-nsw-dev" connected to the "nemp_nsw_test" MongoLab DB deployed on Heroku
  * Git repo: 				https://github.com/grassland-curing-cfa/NempParseServerNSW
- * Heroku app: 				nemp-nsw-dev
- * Initial checkin date: 	23/02/2016
+ * Heroku app: 				https://nemp-nsw-dev.herokuapp.com/parse
+ * Initial checkin date: 		23/02/2016
  */
 
 var _ = require('underscore');
-var schedule = require('node-schedule');	// https://www.npmjs.com/package/node-schedule
+var schedule = require('node-schedule');			// https://www.npmjs.com/package/node-schedule
 
 var SUPERUSER = process.env.SUPER_USER;
 var SUPERPASSWORD = process.env.SUPER_USER_PASS;
@@ -15,18 +15,16 @@ var NULL_VAL_DBL = -1.0;
  
 var APP_ID = process.env.APP_ID;
 var MASTER_KEY = process.env.MASTER_KEY;
-var SERVER_URL = process.env.SERVER_URL;		// https://nemp-nsw-dev.herokuapp.com/parse
+var SERVER_URL = process.env.SERVER_URL;			// https://nemp-nsw-dev.herokuapp.com/parse
  
 var MG_DOMAIN = process.env.MG_DOMAIN;
 var MG_KEY = process.env.MG_KEY;
-var CFA_NEMP_EMAIL = 'grasslandcuring-nemp@cfa.vic.gov.au';
-var CFA_GL_EMAIL = 'grassland@cfa.vic.gov.au';
-var RFS_FBA = 'FBA@rfs.nsw.gov.au';
+var CFA_NEMP_EMAIL = process.env.EMAIL_ADDR_CFA_NEMP;
+var CFA_GL_EMAIL = process.env.EMAIL_ADDR_CFA_GL;
+var RFS_FBA = process.env.EMAIL_ADDR_RFS_FBA;
 var _IS_DAYLIGHT_SAVING = (process.env.IS_DAYLIGHT_SAVING == "1" ? true : false);     		// boolean indicates if it is now in Daylight Saving time
 var _IS_FIRE_DANGER_PERIOD = (process.env.IS_FIRE_DANGER_PERIOD == "1" ? true : false);     	// boolean indicates if it is now in the Fire Danger Period
-//var JOB_START_TIME = '09:45 PM';    // GMT in Daylight Saving, "10:45 PM" not in Daylight Saving
-//var JOB_END_TIME = '10:15 PM';      // GMT in Daylight Saving, "11:15 PM" not in Daylight Saving
-var MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS = 30;		// An obs with the FinalisedDate older than this number should not be returned and treated as Last Season data
+var _MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS = 30;		// An obs with the FinalisedDate older than this number should not be returned and treated as Last Season data
  
 //var SHARED_WITH_STATES = ["ACT", "QLD", "SA", "VIC"];
  
@@ -109,7 +107,7 @@ var j = schedule.scheduleJob({hour: 23, minute: 0, dayOfWeek: 3}, function(){
 			'<br>' + 
 			'<table><tr><td width="30%"><img src="http://www.cfa.vic.gov.au/img/logo.png" width="64" height="64" alt="CFA_LOGO" /></td>' + 
 			'<td><p style="color:#C00000; font-weight: bold;">NEMP Grassland Curing Team</p><p>CFA HQ - Fire & Emergency Management - 8 Lakeside Drive, Burwood East, Victoria, 3151</p>' + 
-			'<p>E: <a href="mailto:grasslandcuring-nemp@cfa.vic.gov.au" target="_top">grasslandcuring-nemp@cfa.vic.gov.au</a></p></td></tr></table>' + 
+			'<p>E: <a href="mailto:' + CFA_NEMP_EMAIL + '" target="_top">' + CFA_NEMP_EMAIL + '</a></p></td></tr></table>' + 
 			'<br>' + 
 			'<p><i>Note: This email has been generated automatically by the NSW RFS Fuel State App.</i></p>' + 
 			'</body>' + 
@@ -248,7 +246,7 @@ Parse.Cloud.define("sendEmailWelcomeNewUser", function(request, response) {
     '<br>' + 
     '<table><tr><td width="30%"><img src="http://www.cfa.vic.gov.au/img/logo.png" width="64" height="64" alt="CFA_LOGO" /></td>' + 
     '<td><p style="color:#C00000; font-weight: bold;">NEMP Grassland Curing Team</p><p>CFA HQ - Fire & Emergency Management - 8 Lakeside Drive, Burwood East, Victoria, 3151</p>' + 
-    '<p>E: <a href="mailto:grasslandcuring-nemp@cfa.vic.gov.au" target="_top">grasslandcuring-nemp@cfa.vic.gov.au</a></p></td></tr></table>' + 
+    '<p>E: <a href="mailto:' + CFA_NEMP_EMAIL + '" target="_top">' + CFA_NEMP_EMAIL + '</a></p></td></tr></table>' + 
     '<br>' + 
     '<p><i>Note: This email has been generated automatically by the NSW Rural Fire Service Grassland Fuel Portal. Please do not reply to this email.</i></p>' + 
     '</body>' + 
@@ -3271,13 +3269,13 @@ function numDaysBetween(d1, d2) {
 };
 
 /**
- * Returns a boolean if a previous obs (ObservationStatus = 1) is MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS days older than Today.
+ * Returns a boolean if a previous obs (ObservationStatus = 1) is _MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS days older than Today.
  */
 function isObsTooOld(finalisedDate) {
 	var today = new Date();
 	var numberOfDaysBetween = numDaysBetween(today, finalisedDate);
 	
-	if (numberOfDaysBetween > MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS)
+	if (numberOfDaysBetween > _MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS)
 		return true;
 	else
 		return false;
