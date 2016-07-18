@@ -20,14 +20,11 @@ var SERVER_URL = process.env.SERVER_URL;		// https://nemp-nsw-dev.herokuapp.com/
 var MG_DOMAIN = process.env.MG_DOMAIN;
 var MG_KEY = process.env.MG_KEY;
 var CFA_NEMP_EMAIL = 'grasslandcuring-nemp@cfa.vic.gov.au';
-var CFA_GL_TEAM_EMAIL = 'grassland-team@cfa.vic.gov.au';
-var RFS_REPORTS_EMAIL = 'grassland.reports@rfs.nsw.gov.au';
 var CFA_GL_EMAIL = 'grassland@cfa.vic.gov.au';
-// var RFS_FIRE_BEHAVIOUR_ANALYSIS_TEAM = 'FireBehaviour.Analysis@rfs.nsw.gov.au';
 var RFS_FBA = 'FBA@rfs.nsw.gov.au';
-var _IS_DAYLIGHT_SAVING = true;     // boolean indicates if it is now in Daylight Saving time
-var JOB_START_TIME = '09:45 PM';    // GMT in Daylight Saving, "10:45 PM" not in Daylight Saving
-var JOB_END_TIME = '10:15 PM';      // GMT in Daylight Saving, "11:15 PM" not in Daylight Saving
+var _IS_DAYLIGHT_SAVING = (process.env.IS_DAYLIGHT_SAVING == "1" ? true : false);;     // boolean indicates if it is now in Daylight Saving time
+//var JOB_START_TIME = '09:45 PM';    // GMT in Daylight Saving, "10:45 PM" not in Daylight Saving
+//var JOB_END_TIME = '10:15 PM';      // GMT in Daylight Saving, "11:15 PM" not in Daylight Saving
 var MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS = 30;		// An obs with the FinalisedDate older than this number should not be returned and treated as Last Season data
  
 //var SHARED_WITH_STATES = ["ACT", "QLD", "SA", "VIC"];
@@ -68,7 +65,10 @@ var j = schedule.scheduleJob({hour: 12, minute: 00, dayOfWeek: 6}, function(){
 });
 
 // Parse.com Job for sending Request for Validation email
-/*
+/******
+Period other than daylight saving days: 11.00 pm (GMT) Wed - this is equivalent to Thursday 9.00 am (AEST, GMT+10);
+For Daylight Saving, 10.00 pm (GMT) = 9.00 am (GMT+11)
+******/
 Parse.Cloud.job("jobRequestForValidation", function(request, status) {
 	status.message("Scheduled Job [jobRequestForValidation] being executed...");
 	
@@ -3488,6 +3488,7 @@ Function to check if today is Tuesday (GMT); time is between 10.45 pm and 11.15 
 this is equivalent to Wednesday 8:45 am and 9:15 am (AEST, GMT+10);
 For Daylight Saving, 09:45 pm and 10:15 pm (GMT) = 8:45 am and 9:15 am (GMT+11)
 ******/
+/*
 function isTodayTuesday() {
 	var today = new Date();
 	if(today.getDay() == 2)
@@ -3541,6 +3542,7 @@ function getval() {
 
     return current_time;
 }
+*/
 
 /**
  * Returns the last day of the a year and a month
