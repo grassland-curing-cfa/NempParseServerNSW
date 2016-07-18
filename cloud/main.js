@@ -69,6 +69,7 @@ var j = schedule.scheduleJob({hour: 12, minute: 00, dayOfWeek: 6}, function(){
 Period other than daylight saving days: 11.00 pm (GMT) Wed - this is equivalent to Thursday 9.00 am (AEST, GMT+10);
 For Daylight Saving, 10.00 pm (GMT) = 9.00 am (GMT+11)
 ******/
+/*
 Parse.Cloud.job("jobRequestForValidation", function(request, status) {
 	status.message("Scheduled Job [jobRequestForValidation] being executed...");
 	
