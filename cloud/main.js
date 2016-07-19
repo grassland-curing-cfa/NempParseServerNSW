@@ -318,7 +318,7 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", function(request, respon
           if (error)
             response.error("" + error);    
           else
-            response.success("Email sent. Details: " + body);
+            response.success("Email sent. Details: " + JSON.stringify(body));
         });
 
         //response.success(emailList);  
