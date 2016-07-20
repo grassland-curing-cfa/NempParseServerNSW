@@ -26,6 +26,7 @@ var CFA_GL_EMAIL = process.env.EMAIL_ADDR_CFA_GL;
 var RFS_FBA = process.env.EMAIL_ADDR_RFS_FBA;
 var _IS_DAYLIGHT_SAVING = (process.env.IS_DAYLIGHT_SAVING == "1" ? true : false);     		// boolean indicates if it is now in Daylight Saving time
 var _IS_FIRE_DANGER_PERIOD = (process.env.IS_FIRE_DANGER_PERIOD == "1" ? true : false);     	// boolean indicates if it is now in the Fire Danger Period
+var GAE_APP_URL = process.env.GAE_APP_URL;
 var _MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS = 30;		// An obs with the FinalisedDate older than this number should not be returned and treated as Last Season data
  
 //var SHARED_WITH_STATES = ["ACT", "QLD", "SA", "VIC"];
@@ -86,7 +87,7 @@ var j = schedule.scheduleJob({hour: 23, minute: 0, dayOfWeek: 3}, function(){
 			'<p>Good morning ' + toPerson + ',</p>' + 
 			'<br>' + 
 			'<p>Grassland curing data for NSW is now ready for checking. To validate the ground observations, please log onto the Grassland Curing Online System ' + 
-			'<a href="http://nemp-nsw.appspot.com">http://nemp-nsw.appspot.com</a>.</p>' + 
+			'<a href="' + GAE_APP_URL + '">' + GAE_APP_URL + '</a>.</p>' + 
 			'<br>' + 
 			'<p>The Grassland Curing Online System has been developed as part of the ongoing project goals of an easy-to-use, user-friendly, reliable and automated system. To use the system:</p>' + 
 			'<br>' + 
@@ -234,7 +235,7 @@ Parse.Cloud.define("sendEmailWelcomeNewUser", function(request, response) {
     '<p>Hi ' + firstname + ',' + '</p>' + '<br>' + 
     '<p>Thank you for participating in the New South Wales grassland curing trial. This trial is supported in collaboration with the NSW Rural Fire Services (RFS) and is sponsored by the Commonwealth Attorney General&#39;s Department National Emergency Management Projects (NEMP).</p>' + '<br>' + 
     '<p>Currently in Victoria, grassland curing is monitored operationally using a combination of satellite data and field observations, which are reported weekly by observers using a web-based data entry tool. As a trial, we are deploying the Victorian approach for New South Wales (as well as other states and territories). For online training videos, we encourage you to visit <a href="www.cfa.vic.gov.au/grass">www.cfa.vic.gov.au/grass</a>.</p>' + '<br>' + 
-    '<p>The New South Wales web-based data entry tool can be accessed via: <a href="http://nemp-nsw.appspot.com">http://nemp-nsw.appspot.com</a> (take note, the tool works best on Firefox, Chrome, Internet Explorer 9 or 10)</p>' + '<br>' + 
+    '<p>The New South Wales web-based data entry tool can be accessed via: <a href="' + GAE_APP_URL + '">' + GAE_APP_URL + '</a> (take note, the tool works best on Firefox, Chrome, Internet Explorer 9 or 10)</p>' + '<br>' + 
     '<p>Your login details are as follows: </p>' + '<br>' + 
     '<ul>' + 
     '<li>Username: ' + username + '</li>' + 
@@ -299,7 +300,7 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", function(request, respon
         var html = '<!DOCTYPE html><html>' +
         '<body>' + 
         'Hello all,' + 
-        '<p>The NSW grassland curing map has been updated for the ' + strToday + '. To view the map, please click <a href="http://nemp-nsw.appspot.com/viscaModel?action=grasslandCuringMap">here</a>.</p>' + 
+        '<p>The NSW grassland curing map has been updated for the ' + strToday + '. To view the map, please click <a href="' + GAE_APP_URL + '/viscaModel?action=grasslandCuringMap">here</a>.</p>' + 
         '<p>Kind Regards,</p>' + 
         '<p>NSW RFS Fire Behaviour Analysis Team <a href="' + RFS_FBA + '">' + RFS_FBA + '</a></p>' + 
         '<p><i>Note: This email has been generated automatically by the NSW Rural Fire Service Grassland Fuel Portal. Please do not reply to this email.</i></p>' + 
