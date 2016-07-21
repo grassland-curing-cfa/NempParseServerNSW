@@ -4,7 +4,8 @@
  * Heroku app: 				https://nemp-nsw-dev.herokuapp.com/parse
  * Initial checkin date: 		23/02/2016
  * Following-up check date:	13/07/2016
-                                18/07/2016
+						18/07/2016
+						21/07/2016
  */
 
 var _ = require('underscore');
@@ -27,9 +28,15 @@ var RFS_FBA = process.env.EMAIL_ADDR_RFS_FBA;
 var _IS_DAYLIGHT_SAVING = (process.env.IS_DAYLIGHT_SAVING == "1" ? true : false);     		// boolean indicates if it is now in Daylight Saving time
 var _IS_FIRE_DANGER_PERIOD = (process.env.IS_FIRE_DANGER_PERIOD == "1" ? true : false);     	// boolean indicates if it is now in the Fire Danger Period
 var GAE_APP_URL = process.env.GAE_APP_URL;
+var VALIDATION_NOTIF_SCHEDULE_JSON = process.env.VALIDATION_NOTIF_SCHEDULE_JSON				// node-schedule cron-like hour/minute/dayOfWeek JSON text
 var _MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS = 30;		// An obs with the FinalisedDate older than this number should not be returned and treated as Last Season data
  
 //var SHARED_WITH_STATES = ["ACT", "QLD", "SA", "VIC"];
+
+var validation_notif_schedule_string = JSON.parse(VALIDATION_NOTIF_SCHEDULE_JSON);
+var validation_notif_hr = (_IS_DAYLIGHT_SAVING) ? validation_notif_schedule_string.hour - 1 : validation_notif_schedule_string.hour;
+var validation_notif_min = validation_notif_schedule_string.minute;
+var validation_notif_dow = validation_notif_schedule_string.dayOfWeek;
  
 // Use Parse.Cloud.define to define as many cloud functions as you want.
 // For example:
@@ -67,7 +74,7 @@ Parse.Cloud.define("testMailgunJS", function(request, response) {
 Period other than daylight saving days: 11.00 pm (GMT) Wed - this is equivalent to Thursday 9.00 am (AEST, GMT+10);
 For Daylight Saving, 10.00 pm (GMT) = 9.00 am (GMT+11)
 ******/
-var j = schedule.scheduleJob({hour: 23, minute: 0, dayOfWeek: 3}, function(){
+var j = schedule.scheduleJob({hour: validation_notif_hr, minute: validation_notif_min, dayOfWeek: validation_notif_dow}, function(){
 	console.log('Scheduled Job [jobRequestForValidation] being executed...');
 	
 	if (_IS_FIRE_DANGER_PERIOD) {
