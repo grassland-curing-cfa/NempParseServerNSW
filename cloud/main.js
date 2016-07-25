@@ -27,16 +27,10 @@ var CFA_GL_EMAIL = process.env.EMAIL_ADDR_CFA_GL;
 var RFS_FBA = process.env.EMAIL_ADDR_RFS_FBA;
 var _IS_DAYLIGHT_SAVING = (process.env.IS_DAYLIGHT_SAVING == "1" ? true : false);     		// boolean indicates if it is now in Daylight Saving time
 var _IS_FIRE_DANGER_PERIOD = (process.env.IS_FIRE_DANGER_PERIOD == "1" ? true : false);     	// boolean indicates if it is now in the Fire Danger Period
-var GAE_APP_URL = process.env.GAE_APP_URL;
-var VALIDATION_NOTIF_SCHEDULE_JSON = process.env.VALIDATION_NOTIF_SCHEDULE_JSON				// node-schedule cron-like hour/minute/dayOfWeek JSON text
+var GAE_APP_URL = process.env.GAE_APP_URL;		// node-schedule cron-like hour/minute/dayOfWeek JSON text
 var _MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS = 30;		// An obs with the FinalisedDate older than this number should not be returned and treated as Last Season data
  
 //var SHARED_WITH_STATES = ["ACT", "QLD", "SA", "VIC"];
-
-var validation_notif_schedule_string = JSON.parse(VALIDATION_NOTIF_SCHEDULE_JSON);
-var validation_notif_hr = (_IS_DAYLIGHT_SAVING) ? validation_notif_schedule_string.hour - 1 : validation_notif_schedule_string.hour;
-var validation_notif_min = validation_notif_schedule_string.minute;
-var validation_notif_dow = validation_notif_schedule_string.dayOfWeek;
  
 // Use Parse.Cloud.define to define as many cloud functions as you want.
 // For example:
@@ -74,16 +68,7 @@ Parse.Cloud.define("testMailgunJS", function(request, response) {
 Period other than daylight saving days: 11.00 pm (GMT) Wed - this is equivalent to Thursday 9.00 am (AEST, GMT+10);
 For Daylight Saving, 10.00 pm (GMT) = 9.00 am (GMT+11)
 ******/
-var j = schedule.scheduleJob({hour: validation_notif_hr, minute: validation_notif_min, dayOfWeek: validation_notif_dow}, function(){
-	console.log('Scheduled Job [jobRequestForValidation] being executed...');
-	
-	if (_IS_FIRE_DANGER_PERIOD) {
-		var toPerson = process.env.VALIDATION_NOTIF_TO_PERSON;
-		var toEmails = process.env.VALIDATION_NOTIF_TO_EMAILS;
-
-		var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
-		
-		var html = '<!DOCTYPE html><html>' + 
+var validationRequestEmailHtml = '<!DOCTYPE html><html>' + 
 			'<head>' + 
 			'<title>Request For Validation</title>' + 
 			'<style>' + 
@@ -91,7 +76,7 @@ var j = schedule.scheduleJob({hour: validation_notif_hr, minute: validation_noti
 			'</style>' + 
 			'</head>' + 
 			'<body>' + 
-			'<p>Good morning ' + toPerson + ',</p>' + 
+			'<p>Good morning ' + process.env.VALIDATION_NOTIF_TO_PERSON + ',</p>' + 
 			'<br>' + 
 			'<p>Grassland curing data for NSW is now ready for checking. To validate the ground observations, please log onto the Grassland Curing Online System ' + 
 			'<a href="' + GAE_APP_URL + '">' + GAE_APP_URL + '</a>.</p>' + 
@@ -123,26 +108,37 @@ var j = schedule.scheduleJob({hour: validation_notif_hr, minute: validation_noti
 			'</body>' + 
 			'</html>';
 
+Parse.Cloud.define("sendEmailRequestForValidation", function(request, response) {
+	console.log('Function [sendEmailRequestForValidation] being executed...');
+
+	if (_IS_FIRE_DANGER_PERIOD) {
+		var toEmails = process.env.VALIDATION_NOTIF_TO_EMAILS;
+
+		var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
+
 		var data = {
 			to: toEmails,
 			cc: CFA_NEMP_EMAIL,
 			from: CFA_NEMP_EMAIL,
 			subject: "Grassland Curing Validation Notification",
 			text: "",
-			html: html
+			html: validationRequestEmailHtml
 		};
 
 		mailgun.messages().send(data, function (error, body) {
-			if (error)
-				console.log(error);    
-			else
+			if (error) {
+				console.log(error);
+				response.error("" + error);
+			}
+			else {
 				console.log(body);
+				response.success(body);
+			}
 		});
-
-
 	}
 	else
-		console.log("_IS_FIRE_DANGER_PERIOD: " + _IS_FIRE_DANGER_PERIOD + "; No RequestForValidation email to be sent.");
+		response.success("_IS_FIRE_DANGER_PERIOD: " + _IS_FIRE_DANGER_PERIOD + "; No RequestForValidation email to be sent.");
+
 });
  
 // Send a "Want to become an observer" email via Mailgun
