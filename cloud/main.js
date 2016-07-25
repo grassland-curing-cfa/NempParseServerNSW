@@ -28,7 +28,7 @@ var CFA_GL_EMAIL = process.env.EMAIL_ADDR_CFA_GL;
 var RFS_FBA = process.env.EMAIL_ADDR_RFS_FBA;
 var _IS_DAYLIGHT_SAVING = (process.env.IS_DAYLIGHT_SAVING == "1" ? true : false);     		// boolean indicates if it is now in Daylight Saving time
 var _IS_FIRE_DANGER_PERIOD = (process.env.IS_FIRE_DANGER_PERIOD == "1" ? true : false);     	// boolean indicates if it is now in the Fire Danger Period
-var GAE_APP_URL = process.env.GAE_APP_URL;		// node-schedule cron-like hour/minute/dayOfWeek JSON text
+var GAE_APP_URL = process.env.GAE_APP_URL;			// The URL to the GAE app (appspot)
 var _MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS = 30;		// An obs with the FinalisedDate older than this number should not be returned and treated as Last Season data
  
 //var SHARED_WITH_STATES = ["ACT", "QLD", "SA", "VIC"];
