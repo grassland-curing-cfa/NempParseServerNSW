@@ -6,6 +6,7 @@
  * Following-up check date:	13/07/2016
 						18/07/2016
 						21/07/2016
+						25/07/2016: added "sendEmailRequestForValidation" function
  */
 
 var _ = require('underscore');
@@ -138,7 +139,6 @@ Parse.Cloud.define("sendEmailRequestForValidation", function(request, response) 
 	}
 	else
 		response.success("_IS_FIRE_DANGER_PERIOD: " + _IS_FIRE_DANGER_PERIOD + "; No RequestForValidation email to be sent.");
-
 });
  
 // Send a "Want to become an observer" email via Mailgun
