@@ -556,6 +556,7 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 				if ( isShareable && (locStatus.toLowerCase() != "suspended") ) {
 					var locObjId = loc.id;
 					var locName = loc.get("LocationName");
+					console.log(locName);
 					var distNo = loc.get("DistrictNo");
 					var locLat = loc.get("Lat");
 					var locLng = loc.get("Lng");
