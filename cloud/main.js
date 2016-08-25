@@ -542,7 +542,7 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 		queryObservation.limit(1000);
 		
 		return queryObservation.find(); 
-	})).then(function(obs) {
+	}).then(function(obs) {
 		//console.log("obs.length=" + obs.length);
 		for (var j = 0; j < obs.length; j ++) {
 			// check if FinalisedDate is 30 days away
