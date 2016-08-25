@@ -65,77 +65,6 @@ Parse.Cloud.define("testMailgunJS", function(request, response) {
   });
 });
 
-Parse.Cloud.define("testTurf", function(request, response) {
-	Parse.Cloud.useMasterKey();
-	
-	var searchWithin = {
-			  "type": "FeatureCollection",
-			  "features": [
-			    {
-			      "type": "Feature",
-			      "properties": {},
-			      "geometry": {
-			        "type": "Polygon",
-			        "coordinates": [[
-			          [-46.653,-23.543],
-			          [-46.634,-23.5346],
-			          [-46.613,-23.543],
-			          [-46.614,-23.559],
-			          [-46.631,-23.567],
-			          [-46.653,-23.560],
-			          [-46.653,-23.543]
-			        ]]
-			      }
-			    }
-			  ]
-			};
-			var points = {
-			  "type": "FeatureCollection",
-			  "features": [
-			    {
-			      "type": "Feature",
-			      "properties": {},
-			      "geometry": {
-			        "type": "Point",
-			        "coordinates": [-46.6318, -23.5523]
-			      }
-			    }, {
-			      "type": "Feature",
-			      "properties": {},
-			      "geometry": {
-			        "type": "Point",
-			        "coordinates": [-46.6246, -23.5325]
-			      }
-			    }, {
-			      "type": "Feature",
-			      "properties": {},
-			      "geometry": {
-			        "type": "Point",
-			        "coordinates": [-46.6062, -23.5513]
-			      }
-			    }, {
-			      "type": "Feature",
-			      "properties": {},
-			      "geometry": {
-			        "type": "Point",
-			        "coordinates": [-46.663, -23.554]
-			      }
-			    }, {
-			      "type": "Feature",
-			      "properties": {},
-			      "geometry": {
-			        "type": "Point",
-			        "coordinates": [-46.643, -23.557]
-			      }
-			    }
-			  ]
-			};
-
-			var ptsWithin = turf.within(points, searchWithin);
-			
-			response.success("ptsWithin ... ... " + JSON.stringify(ptsWithin));
-});
-
 // Parse.com Job for sending Request for Validation email
 /******
 Period other than daylight saving days: 11.00 pm (GMT) Wed - this is equivalent to Thursday 9.00 am (AEST, GMT+10);
@@ -697,15 +626,36 @@ Parse.Cloud.define("getSharedPrevCuringForStateForInputToVISCA", function(reques
 	
 	var stateName = request.params.state;
 	
+	var isBufferZonePntsForStateApplied = true;
+	var bufferZonePntsForState = null;
+	
 	var sharedObsArr = [];
 	
-	var queryObservation = new Parse.Query("GCUR_OBSERVATION");
-	queryObservation.include("Location");
-	queryObservation.equalTo("ObservationStatus", 1);			// Previous week's observations
-	queryObservation.limit(1000);
+	var querySharedJurisSettings = new Parse.Query("GCUR_SHARED_JURIS_SETTINGS");
+	querySharedJurisSettings.equalTo("Jurisdiction", stateName);		// Find the record for the input jurisdiction
+
+	// Find the "bufferZonePnts" for the input jurisdiction
+	// "bufferZonePnts" can be either the set point array, or "null" or "undefined" as well.
+	querySharedJurisSettings.first().then(function(jurisSetting) {
+		bufferZonePntsForState = jurisSetting.get("bufferZonePnts");
+			
+		if ((bufferZonePntsForState == null) || (bufferZonePntsForState == undefined))
+			isBufferZonePntsForStateApplied = false;
+			
+		return Parse.Promise.as("'bufferZonePnts' is found for jurisdiction " + stateName);
+	}, function(error) {
+		console.log("There was an error in finding Class 'GCUR_SHARED_JURIS_SETTINGS', but we continue to find previous observations.");
+		return Parse.Promise.as("There was an error in finding Class 'GCUR_SHARED_JURIS_SETTINGS', but we continue to find previous observations.");
+	}).then(function() {
+		console.log("isBufferZonePntsForStateApplied = " + isBufferZonePntsForStateApplied + " for " + stateName);
 	
-	queryObservation.find().then(function(obs) {
-		//console.log("obs.length=" + obs.length);
+		var queryObservation = new Parse.Query("GCUR_OBSERVATION");
+		queryObservation.include("Location");
+		queryObservation.equalTo("ObservationStatus", 1);			// Previous week's observations
+		queryObservation.limit(1000);
+	
+		return queryObservation.find();
+	}).then(function(obs) {
 		for (var j = 0; j < obs.length; j ++) {
 			// check if FinalisedDate is 30 days away
 			var isPrevObsTooOld = isObsTooOld(obs[j].get("FinalisedDate"));
@@ -767,6 +717,74 @@ Parse.Cloud.define("getSharedPrevCuringForStateForInputToVISCA", function(reques
 			"state" : stateName,
 			"sharedObsArr" : sharedObsArr
 		};
+		
+		// If isBufferZonePntsForStateApplied is false OR sharedObsArr contains zero element
+		if ((isBufferZonePntsForStateApplied == false) || (sharedObsArr.length < 1)) {
+			console.log("Not to apply buffer zone for " + stateName + " OR sharedObsArr contains zero element.");
+		}
+		// apply Turf package for buffering
+		else {
+			var searchWithin = {
+					"type": "FeatureCollection",
+					"features": [
+				      {
+				    	  "type": "Feature",
+				    	  "properties": {},
+				    	  "geometry": {
+					        "type": "Polygon",
+					        "coordinates": new Array()
+					      }
+				      }
+				    ]
+			};
+			
+			bufferZonePntsForState = JSON.parse(bufferZonePntsForState);
+			searchWithin["features"][0]["geometry"]["coordinates"].push(bufferZonePntsForState);
+
+			var pointsToCheck = {
+					"type": "FeatureCollection",
+					"features": []
+			};
+			
+			for (var j = 0; j < sharedObsArr.length; j++) {
+				var obsObjId = sharedObsArr[j]["obsObjId"];
+				var lat = sharedObsArr[j]["lat"];
+				var lng = sharedObsArr[j]["lng"];
+				
+				var featureObj = {
+						"type": "Feature",
+					    "properties": {"obsObjId" : obsObjId},
+					    "geometry": {
+					    	"type": "Point",
+					    	"coordinates": [lng, lat]
+					    }
+				};
+				
+				pointsToCheck["features"].push(featureObj);
+			}
+			
+			// Use Turf to retrieve points that are within the buffer zone
+			var ptsWithin = turf.within(pointsToCheck, searchWithin);
+			
+			var sharedObsArrFiltered = [];
+			
+			console.log("Out of a total of " + sharedObsArr.length + " observations, " + ptsWithin["features"].length + " are within the buffer zone of " + stateName);
+			
+			for (var m = 0; m < ptsWithin["features"].length; m++) {
+				for (var n = 0; n < sharedObsArr.length; n++) {
+					if (ptsWithin["features"][m]["properties"]["obsObjId"] == sharedObsArr[n]["obsObjId"]) {
+						sharedObsArrFiltered.push(sharedObsArr[n]);
+						break;
+					}
+				}
+			}
+			
+			returnedObj = {
+				"state" : stateName,
+				"sharedObsArr" : sharedObsArrFiltered
+			};
+		}
+		
 		return response.success(returnedObj);
 	}, function(error) {
 		response.error("Error: " + error.code + " " + error.message);
