@@ -624,7 +624,6 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 			return response.success(returnedObj);
 		// apply Turf package for buffering
 		else {
-			return response.success(returnedObj);
 			var searchWithin = {
 					"type": "FeatureCollection",
 					"features": [
@@ -640,7 +639,7 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 			
 			bufferZonePnts = JSON.parse(bufferZonePnts);
 			searchWithin["features"][0]["geometry"]["coordinates"].push(bufferZonePnts);
-			
+return response.success(JSON.stringify(searchWithin));
 			var pointsToCheck = {
 					"type": "FeatureCollection",
 					"features": []
