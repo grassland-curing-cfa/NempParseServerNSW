@@ -11,6 +11,7 @@
 
 var _ = require('underscore');
 var schedule = require('node-schedule');			// https://www.npmjs.com/package/node-schedule
+var turf = require('turf');							// https://www.npmjs.com/package/turf
 
 var SUPERUSER = process.env.SUPER_USER;
 var SUPERPASSWORD = process.env.SUPER_USER_PASS;
@@ -62,6 +63,77 @@ Parse.Cloud.define("testMailgunJS", function(request, response) {
     else
       response.success(body);
   });
+});
+
+Parse.Cloud.define("testTurf", function(request, response) {
+	Parse.Cloud.useMasterKey();
+	
+	var searchWithin = {
+			  "type": "FeatureCollection",
+			  "features": [
+			    {
+			      "type": "Feature",
+			      "properties": {},
+			      "geometry": {
+			        "type": "Polygon",
+			        "coordinates": [[
+			          [-46.653,-23.543],
+			          [-46.634,-23.5346],
+			          [-46.613,-23.543],
+			          [-46.614,-23.559],
+			          [-46.631,-23.567],
+			          [-46.653,-23.560],
+			          [-46.653,-23.543]
+			        ]]
+			      }
+			    }
+			  ]
+			};
+			var points = {
+			  "type": "FeatureCollection",
+			  "features": [
+			    {
+			      "type": "Feature",
+			      "properties": {},
+			      "geometry": {
+			        "type": "Point",
+			        "coordinates": [-46.6318, -23.5523]
+			      }
+			    }, {
+			      "type": "Feature",
+			      "properties": {},
+			      "geometry": {
+			        "type": "Point",
+			        "coordinates": [-46.6246, -23.5325]
+			      }
+			    }, {
+			      "type": "Feature",
+			      "properties": {},
+			      "geometry": {
+			        "type": "Point",
+			        "coordinates": [-46.6062, -23.5513]
+			      }
+			    }, {
+			      "type": "Feature",
+			      "properties": {},
+			      "geometry": {
+			        "type": "Point",
+			        "coordinates": [-46.663, -23.554]
+			      }
+			    }, {
+			      "type": "Feature",
+			      "properties": {},
+			      "geometry": {
+			        "type": "Point",
+			        "coordinates": [-46.643, -23.557]
+			      }
+			    }
+			  ]
+			};
+
+			var ptsWithin = turf.within(points, searchWithin);
+			
+			response.success("ptsWithin ... ... " + JSON.stringify(ptsWithin));
 });
 
 // Parse.com Job for sending Request for Validation email
