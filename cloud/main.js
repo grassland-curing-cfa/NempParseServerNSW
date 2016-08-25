@@ -659,6 +659,7 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 				pointsToCheck["features"].push(featureObj);
 			}
 			
+			console.log("RUNNING");
 			var ptsWithin = turf.within(pointsToCheck, searchWithin);
 			
 			response.success("ptsWithin ... ... " + JSON.stringify(ptsWithin));
