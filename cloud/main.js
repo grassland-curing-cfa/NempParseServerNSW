@@ -624,6 +624,7 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 			return response.success(returnedObj);
 		// apply Turf package for buffering
 		else {
+			return response.success(returnedObj);
 			var searchWithin = {
 					"type": "FeatureCollection",
 					"features": [
