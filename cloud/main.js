@@ -555,7 +555,6 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 				if ( isShareable && (locStatus.toLowerCase() != "suspended") ) {
 					var locObjId = loc.id;
 					var locName = loc.get("LocationName");
-					console.log(locName);
 					var distNo = loc.get("DistrictNo");
 					var locLat = loc.get("Lat");
 					var locLng = loc.get("Lng");
@@ -643,7 +642,7 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 					"features": []
 			};
 			
-			for (var j = 0; j < sharedInfos.length; j ++) {
+			for (var j = 0; j < sharedInfos.length; j++) {
 				var obsObjId = sharedInfos[j]["obsObjId"];
 				var lat = sharedInfos[j]["lat"];
 				var lng = sharedInfos[j]["lng"];
@@ -662,8 +661,22 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 			
 			var ptsWithin = turf.within(pointsToCheck, searchWithin);
 			
-			response.success("ptsWithin ... ... " + JSON.stringify(ptsWithin));
+			var sharedInfosFiltered = [];
 			
+			for (var m = 0; m < ptsWithin["features"].length; m++) {
+				for (var n = 0; n < sharedInfos.length; n++) {
+					if (ptsWithin["features"][m]["properties"]["obsObjId"] == sharedInfos[n]["obsObjId"]) {
+						sharedInfosFiltered.push(sharedInfos[n]);
+						break;
+					}
+				}
+			}
+			
+			returnedObj = {
+				"state" : stateName,
+				"sharedInfos" : sharedInfosFiltered
+			};
+			return response.success(returnedObj);
 		}
 	}, function(error) {
 		response.error("Error: " + error.code + " " + error.message);
