@@ -627,19 +627,20 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 			var searchWithin = {
 					"type": "FeatureCollection",
 					"features": [
-					{
+				      {
 				    	  "type": "Feature",
 				    	  "properties": {},
 				    	  "geometry": {
-				    		  "type": "Polygon",
-				    		  "coordinates": new Array()
+					        "type": "Polygon",
+					        "coordinates": new Array()
 					      }
-				    }]
+				      }
+				    ]
 			};
 			
-			bufferZonePnts = JSON.parse(bufferZonePnts);
-			searchWithin["features"][0]["geometry"]["coordinates"].push(bufferZonePnts);
-return response.success(JSON.stringify(searchWithin));
+			bufferZonePntsForState = JSON.parse(bufferZonePntsForState);
+			searchWithin["features"][0]["geometry"]["coordinates"].push(bufferZonePntsForState);
+//return response.success(JSON.stringify(searchWithin));
 			var pointsToCheck = {
 					"type": "FeatureCollection",
 					"features": []
