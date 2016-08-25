@@ -616,8 +616,9 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 		};
 		
 		// If isBufferZonePntsForStateApplied is false OR sharedInfos contains zero element
-		if ((isBufferZonePntsForStateApplied == false) || (sharedInfos.length < 1))
-			return response.success(returnedObj);
+		if ((isBufferZonePntsForStateApplied == false) || (sharedInfos.length < 1)) {
+			console.log("Not to apply buffer zone for " + stateName + " OR sharedInfos contains zero element.");
+		}
 		// apply Turf package for buffering
 		else {
 			var searchWithin = {
@@ -659,9 +660,12 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 				pointsToCheck["features"].push(featureObj);
 			}
 			
+			// Use Turf to retrieve points that are within the buffer zone
 			var ptsWithin = turf.within(pointsToCheck, searchWithin);
 			
 			var sharedInfosFiltered = [];
+			
+			console.log("Out of a total of " + sharedInfos.length + " observations, " + ptsWithin["features"].length + " are within the buffer zone of " + stateName);
 			
 			for (var m = 0; m < ptsWithin["features"].length; m++) {
 				for (var n = 0; n < sharedInfos.length; n++) {
@@ -676,101 +680,12 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 				"state" : stateName,
 				"sharedInfos" : sharedInfosFiltered
 			};
-			return response.success(returnedObj);
-		}
-	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
-	});
-	
-	
-	
-	
-	//###################################################################################################
-/*
-	var queryObservation = new Parse.Query("GCUR_OBSERVATION");
-	queryObservation.include("Location");
-	queryObservation.equalTo("ObservationStatus", 1);			// Previous week's observations
-	queryObservation.limit(1000);
-	
-	queryObservation.find().then(function(obs) {
-		//console.log("obs.length=" + obs.length);
-		for (var j = 0; j < obs.length; j ++) {
-			// check if FinalisedDate is 30 days away
-			var isPrevObsTooOld = isObsTooOld(obs[j].get("FinalisedDate"));
-			if (!isPrevObsTooOld) {
-				var loc = obs[j].get("Location");
-				var isShareable = loc.get("Shareable");
-				var locStatus = loc.get("LocationStatus");
-				
-				// We only retrieve obs curing for locations that are shareable
-				if ( isShareable && (locStatus.toLowerCase() != "suspended") ) {
-					var locObjId = loc.id;
-					var locName = loc.get("LocationName");
-					var distNo = loc.get("DistrictNo");
-					var locLat = loc.get("Lat");
-					var locLng = loc.get("Lng");
-					
-					var obsObjId = obs[j].id;
-					
-					var prevOpsCuring, prevOpsDate;
-					if (obs[j].has("AdminCuring")) {
-						prevOpsCuring = obs[j].get("AdminCuring");
-						prevOpsDate = obs[j].get("AdminDate");
-					} else if (obs[j].has("ValidatorCuring")) {
-						prevOpsCuring = obs[j].get("ValidatorCuring");
-						prevOpsDate = obs[j].get("ValidationDate");
-					} else {
-						prevOpsCuring = obs[j].get("AreaCuring");
-						prevOpsDate = obs[j].get("ObservationDate");
-					}
-	
-					var finalisedDate = obs[j].get("FinalisedDate");
-					
-					// In Array; convert raw string to JSON Array
-					// For example, "[{"st":"VIC","sh":false},{"st":"QLD","sh":true},{"st":"NSW","sh":true}]"
-					if (obs[j].has("SharedBy")) {
-						
-						var sharedByInfo = JSON.parse(obs[j].get("SharedBy"));
-						
-						var isSharedByState;
-						
-						for (var p = 0; p < sharedByInfo.length; p ++) {
-							if (sharedByInfo[p]["st"] == stateName) {
-								isSharedByState = sharedByInfo[p]["sh"];
-								
-								var returnedItem = {
-									"obsObjId" : obsObjId,
-									"locObjId"	: locObjId,
-									"locName" : locName,
-									"locStatus" : locStatus,
-									"distNo" : distNo,
-									"isSharedByState" : isSharedByState,
-									"prevOpsCuring" : prevOpsCuring,
-									"prevOpsDate" : prevOpsDate,
-									"lat" : locLat,
-									"lng" : locLng,
-									"finalisedDate" : finalisedDate
-								};
-								
-								sharedInfos.push(returnedItem);
-								break;
-							}
-						}
-					}
-				}
-			}
 		}
 		
-		var returnedObj = {
-			"state" : stateName,
-			"sharedInfos" : sharedInfos
-		};
 		return response.success(returnedObj);
 	}, function(error) {
 		response.error("Error: " + error.code + " " + error.message);
 	});
-	
-	*/
 });
 
 /**
