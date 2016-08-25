@@ -513,8 +513,118 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 	
 	var stateName = request.params.state;
 	
+	var isBufferZonePntsForStateApplied = true;
+	var bufferZonePntsForState = null;
+	
 	var sharedInfos = [];
 	
+	var querySharedJurisSettings = new Parse.Query("GCUR_SHARED_JURIS_SETTINGS");
+	querySharedJurisSettings.equalTo("Jurisdiction", stateName);		// Find the record for the input jurisdiction
+
+	// Find the "bufferZonePnts" for the input jurisdiction
+	// "bufferZonePnts" can be either the set point array, or "null" or "undefined" as well.
+	querySharedJurisSettings.first().then(function(jurisSetting) {
+		bufferZonePntsForState = jurisSetting.get("bufferZonePnts");
+			
+		if ((bufferZonePntsForState == null) || (bufferZonePntsForState == undefined))
+			isBufferZonePntsForStateApplied = false;
+			
+		return Parse.Promise.as("'bufferZonePnts' is found for jurisdiction " + stateName);
+	}, function(error) {
+		console.log("There was an error in finding Class 'GCUR_SHARED_JURIS_SETTINGS'.");
+		return Parse.Promise.as("There was an error in finding Class 'GCUR_SHARED_JURIS_SETTINGS', but we continue to find previous observations.");
+	}).then(function() {
+		console.log("isBufferZonePntsForStateApplied = " + isBufferZonePntsForStateApplied);
+		
+		var queryObservation = new Parse.Query("GCUR_OBSERVATION");
+		queryObservation.include("Location");
+		queryObservation.equalTo("ObservationStatus", 1);			// Previous week's observations
+		queryObservation.limit(1000);
+		
+		return queryObservation.find(); 
+	})).then(function(obs) {
+		//console.log("obs.length=" + obs.length);
+		for (var j = 0; j < obs.length; j ++) {
+			// check if FinalisedDate is 30 days away
+			var isPrevObsTooOld = isObsTooOld(obs[j].get("FinalisedDate"));
+			if (!isPrevObsTooOld) {
+				var loc = obs[j].get("Location");
+				var isShareable = loc.get("Shareable");
+				var locStatus = loc.get("LocationStatus");
+				
+				// We only retrieve obs curing for locations that are shareable
+				if ( isShareable && (locStatus.toLowerCase() != "suspended") ) {
+					var locObjId = loc.id;
+					var locName = loc.get("LocationName");
+					var distNo = loc.get("DistrictNo");
+					var locLat = loc.get("Lat");
+					var locLng = loc.get("Lng");
+					
+					var obsObjId = obs[j].id;
+					
+					var prevOpsCuring, prevOpsDate;
+					if (obs[j].has("AdminCuring")) {
+						prevOpsCuring = obs[j].get("AdminCuring");
+						prevOpsDate = obs[j].get("AdminDate");
+					} else if (obs[j].has("ValidatorCuring")) {
+						prevOpsCuring = obs[j].get("ValidatorCuring");
+						prevOpsDate = obs[j].get("ValidationDate");
+					} else {
+						prevOpsCuring = obs[j].get("AreaCuring");
+						prevOpsDate = obs[j].get("ObservationDate");
+					}
+	
+					var finalisedDate = obs[j].get("FinalisedDate");
+					
+					// In Array; convert raw string to JSON Array
+					// For example, "[{"st":"VIC","sh":false},{"st":"QLD","sh":true},{"st":"NSW","sh":true}]"
+					if (obs[j].has("SharedBy")) {
+						
+						var sharedByInfo = JSON.parse(obs[j].get("SharedBy"));
+						
+						var isSharedByState;
+						
+						for (var p = 0; p < sharedByInfo.length; p ++) {
+							if (sharedByInfo[p]["st"] == stateName) {
+								isSharedByState = sharedByInfo[p]["sh"];
+								
+								var returnedItem = {
+									"obsObjId" : obsObjId,
+									"locObjId"	: locObjId,
+									"locName" : locName,
+									"locStatus" : locStatus,
+									"distNo" : distNo,
+									"isSharedByState" : isSharedByState,
+									"prevOpsCuring" : prevOpsCuring,
+									"prevOpsDate" : prevOpsDate,
+									"lat" : locLat,
+									"lng" : locLng,
+									"finalisedDate" : finalisedDate
+								};
+								
+								sharedInfos.push(returnedItem);
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		var returnedObj = {
+			"state" : stateName,
+			"sharedInfos" : sharedInfos
+		};
+		return response.success(returnedObj);
+	}, function(error) {
+		response.error("Error: " + error.code + " " + error.message);
+	});
+	
+	
+	
+	
+	//###################################################################################################
+/*
 	var queryObservation = new Parse.Query("GCUR_OBSERVATION");
 	queryObservation.include("Location");
 	queryObservation.equalTo("ObservationStatus", 1);			// Previous week's observations
@@ -597,6 +707,8 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 	}, function(error) {
 		response.error("Error: " + error.code + " " + error.message);
 	});
+	
+	*/
 });
 
 /**
