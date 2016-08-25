@@ -543,7 +543,7 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 		
 		return queryObservation.find(); 
 	}).then(function(obs) {
-		//console.log("obs.length=" + obs.length);
+		console.log("RUNNING 0");
 		for (var j = 0; j < obs.length; j ++) {
 			// check if FinalisedDate is 30 days away
 			var isPrevObsTooOld = isObsTooOld(obs[j].get("FinalisedDate"));
@@ -616,6 +616,8 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 			"sharedInfos" : sharedInfos
 		};
 		
+		console.log("RUNNING 1");
+		
 		// If isBufferZonePntsForStateApplied is false OR sharedInfos contains zero element
 		if ((isBufferZonePntsForStateApplied == false) || (sharedInfos.length < 1))
 			return response.success(returnedObj);
@@ -659,7 +661,7 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 				pointsToCheck["features"].push(featureObj);
 			}
 			
-			console.log("RUNNING");
+			console.log("RUNNING 2");
 			var ptsWithin = turf.within(pointsToCheck, searchWithin);
 			
 			response.success("ptsWithin ... ... " + JSON.stringify(ptsWithin));
