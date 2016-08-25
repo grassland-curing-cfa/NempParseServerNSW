@@ -531,10 +531,10 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 			
 		return Parse.Promise.as("'bufferZonePnts' is found for jurisdiction " + stateName);
 	}, function(error) {
-		console.log("There was an error in finding Class 'GCUR_SHARED_JURIS_SETTINGS'.");
+		console.log("There was an error in finding Class 'GCUR_SHARED_JURIS_SETTINGS', but we continue to find previous observations.");
 		return Parse.Promise.as("There was an error in finding Class 'GCUR_SHARED_JURIS_SETTINGS', but we continue to find previous observations.");
 	}).then(function() {
-		console.log("isBufferZonePntsForStateApplied = " + isBufferZonePntsForStateApplied);
+		console.log("isBufferZonePntsForStateApplied = " + isBufferZonePntsForStateApplied + " for " + stateName);
 		
 		var queryObservation = new Parse.Query("GCUR_OBSERVATION");
 		queryObservation.include("Location");
@@ -615,7 +615,55 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 			"state" : stateName,
 			"sharedInfos" : sharedInfos
 		};
-		return response.success(returnedObj);
+		
+		// If isBufferZonePntsForStateApplied is false OR sharedInfos contains zero element
+		if ((isBufferZonePntsForStateApplied == false) || (sharedInfos.length < 1))
+			return response.success(returnedObj);
+		// apply Turf package for buffering
+		else {
+			var searchWithin = {
+					"type": "FeatureCollection",
+					"features": [
+					{
+				    	  "type": "Feature",
+				    	  "properties": {},
+				    	  "geometry": {
+				    		  "type": "Polygon",
+				    		  "coordinates": new Array()
+					      }
+				    }]
+			};
+			
+			bufferZonePnts = JSON.parse(bufferZonePnts);
+			searchWithin["features"][0]["geometry"]["coordinates"].push(bufferZonePnts);
+			
+			var pointsToCheck = {
+					"type": "FeatureCollection",
+					"features": []
+			};
+			
+			for (var j = 0; j < sharedInfos.length; j ++) {
+				var obsObjId = sharedInfos[j]["obsObjId"];
+				var lat = sharedInfos[j]["lat"];
+				var lng = sharedInfos[j]["lng"];
+				
+				var featureObj = {
+						"type": "Feature",
+					    "properties": {"obsObjId" : obsObjId},
+					    "geometry": {
+					    	"type": "Point",
+					    	"coordinates": [lng, lat]
+					    }
+				};
+				
+				pointsToCheck["features"].push(featureObj);
+			}
+			
+			var ptsWithin = turf.within(pointsToCheck, searchWithin);
+			
+			response.success("ptsWithin ... ... " + JSON.stringify(ptsWithin));
+			
+		}
 	}, function(error) {
 		response.error("Error: " + error.code + " " + error.message);
 	});
