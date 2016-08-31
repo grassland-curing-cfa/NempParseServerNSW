@@ -42,13 +42,13 @@ var api = new ParseServer({
   verifyUserEmails: true,
   preventLoginWithUnverifiedEmail: false, // defaults to false
   //Your apps name. This will appear in the subject and body of the emails that are sent.
-  appName: 'RFS Grass Fuel Portal',
+  appName: process.env.APP_NAME,
   // The email adapter
   emailAdapter: {
     module: 'parse-server-simple-mailgun-adapter',
     options: {
       // The address that your emails come from
-      fromAddress: 'grasslandcuring-nemp@cfa.vic.gov.au',
+      fromAddress: process.env.EMAIL_ADDR_RFS_FBA,
       // Your domain from mailgun.com
       domain: process.env.MG_DOMAIN,
       // Your API key from mailgun.com
