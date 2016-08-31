@@ -36,7 +36,25 @@ var api = new ParseServer({
     S3Bucket,
     {directAccess: true,
      region: 'ap-southeast-1'}
-  )
+  ),
+  
+  //Enable email verification
+  verifyUserEmails: true,
+  preventLoginWithUnverifiedEmail: false, // defaults to false
+  //Your apps name. This will appear in the subject and body of the emails that are sent.
+  appName: 'RFS Grass Fuel Portal',
+  // The email adapter
+  emailAdapter: {
+    module: 'parse-server-simple-mailgun-adapter',
+    options: {
+      // The address that your emails come from
+      fromAddress: 'grasslandcuring-nemp@cfa.vic.gov.au',
+      // Your domain from mailgun.com
+      domain: process.env.MG_DOMAIN,
+      // Your API key from mailgun.com
+      apiKey: process.env.MG_KEY
+    }
+  }
 });
 // Client-keys like the javascript key or the .NET key are not necessary with parse-server
 // If you wish you require them, you can set them as options in the initialization above:
