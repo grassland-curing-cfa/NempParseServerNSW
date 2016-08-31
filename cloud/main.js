@@ -4,9 +4,12 @@
  * Heroku app: 				https://nemp-nsw-dev.herokuapp.com/parse
  * Initial checkin date: 		23/02/2016
  * Following-up check date:	13/07/2016
-						18/07/2016
-						21/07/2016
-						25/07/2016: added "sendEmailRequestForValidation" function
+							18/07/2016
+							21/07/2016
+							25/07/2016: added "sendEmailRequestForValidation" function
+							26/08/2016: added use of "turf" package for spatial analysis and manipulation tools;
+										updated "getPrevSimpleObsSharedInfoForState" & "getSharedPrevCuringForStateForInputToVISCA"
+ * https://nemp-nsw-dev.herokuapp.com/parse/
  */
 
 var _ = require('underscore');
