@@ -500,7 +500,7 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 					} else {
 						prevOpsCuring = obs[j].get("AreaCuring");
 					}
-					
+					console.log("prevOpsCuring:" + prevOpsCuring)
 					if (obs[j].has("AdminDate")) {
 						prevOpsDate = obs[j].get("AdminDate");
 					} else if (obs[j].has("ValidationDate")) {
