@@ -508,6 +508,10 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 					} else if (obs[j].has("ObservationDate")) {
 						prevOpsDate = obs[j].get("ObservationDate");
 					}
+					
+					if (prevOpsCuring == undefined) {
+						console.log(locName + " [" + locObjId + "] has no prevOpsCuring, so will not proceed to the further process.");
+					}
 	
 					var finalisedDate = obs[j].get("FinalisedDate");
 					
@@ -686,6 +690,10 @@ Parse.Cloud.define("getSharedPrevCuringForStateForInputToVISCA", function(reques
 						prevOpsCuring = obs[j].get("ValidatorCuring");
 					} else if (obs[j].has("AreaCuring")) {
 						prevOpsCuring = obs[j].get("AreaCuring");
+					}
+					
+					if (prevOpsCuring == undefined) {
+						console.log(locName + " [" + locObjId + "] has no prevOpsCuring, so will not proceed to the further process.");
 					}
 					
 					// In Array; convert raw string to JSON Array
