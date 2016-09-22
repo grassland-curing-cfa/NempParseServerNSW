@@ -491,7 +491,7 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 					
 					var obsObjId = obs[j].id;
 					
-					var prevOpsCuring, prevOpsDate;		// Either can be undefined.
+					var prevOpsCuring = prevOpsDate = undefined;		// Either can be undefined.
 					
 					if (obs[j].has("AdminCuring")) {
 						prevOpsCuring = obs[j].get("AdminCuring");
