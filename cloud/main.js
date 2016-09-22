@@ -500,7 +500,7 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 					} else if (obs[j].has("AreaCuring")) {
 						prevOpsCuring = obs[j].get("AreaCuring");
 					}
-					
+					console.log(locName + ":" + prevOpsCuring);
 					if (obs[j].has("AdminDate")) {
 						prevOpsDate = obs[j].get("AdminDate");
 					} else if (obs[j].has("ValidationDate")) {
@@ -514,7 +514,7 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 					// In Array; convert raw string to JSON Array
 					// For example, "[{"st":"VIC","sh":false},{"st":"QLD","sh":true},{"st":"NSW","sh":true}]"
 					if (obs[j].has("SharedBy") && (prevOpsCuring != undefined)) {
-						
+						console.log(locName + ":" + prevOpsCuring);
 						var sharedByInfo = JSON.parse(obs[j].get("SharedBy"));
 						
 						var isSharedByState;
