@@ -332,7 +332,39 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", function(request, respon
         response.error("GCUR_MMR_USER_ROLE table lookup failed");
     });
 });
- 
+
+//export a list of email addresses for all active users
+Parse.Cloud.define("exportEmailsForActiveUsers", function(request, response) {
+	var recipientList = "";
+	Parse.Cloud.useMasterKey();
+	
+	var queryMMR = new Parse.Query("GCUR_MMR_USER_ROLE");
+	queryMMR.include("user");
+	queryMMR.include("role");
+	queryMMR.limit(1000);
+	queryMMR.find().then(function(results) {
+		// results is array of GCUR_MMR_USER_ROLE records
+		for (var i = 0; i < results.length; i++) {
+			var role = results[i].get("role");
+			var status = results[i].get("status");
+			if (status && ((role.get("name") == "Observers") || (role.get("name") == "Validators"))) {
+			//if (status) {	// only select active users
+				var user = results[i].get("user");
+				var email = user.get("email");
+				
+				if (recipientList.indexOf(email) == -1) {
+					console.log("Email [" + email + "] being added in recipientList.");
+					recipientList = recipientList + email + ";";
+				} else
+					console.log("Email [" + email + "] already added in recipientList.");
+			}
+		}
+		response.success(recipientList);	
+	}, function(error) {
+	    response.error("GCUR_MMR_USER_ROLE table lookup failed");
+	});
+});
+
 Parse.Cloud.define("countOfObservations", function(request, response) {
   var query = new Parse.Query("GCUR_OBSERVATION");
 
