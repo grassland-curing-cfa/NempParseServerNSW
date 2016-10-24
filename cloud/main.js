@@ -440,9 +440,9 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 	Parse.Cloud.useMasterKey();
 	sharedWithJurisArr = [];
 	
-	if(!request.object.existed()) {
+	if(request.object.isNew()) {
 		// Adding a new GCUR_OBSERVATION object
-		
+		console.log("This Observation is new. " + request.object.get("Location"));
 		var sharedJurisSettingsQ = new Parse.Query("GCUR_SHARED_JURIS_SETTINGS");
 		
 		sharedJurisSettingsQ.find().then(function(sjsObjs) {
@@ -468,8 +468,56 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 			
 			response.success();
 		});
-	} else
-		response.success();
+	} else {
+		// Updating an existing GCUR_OBSERVATION object
+		
+		var objId = request.object.id;
+		console.log("This Observation exists already - objectId = " + objId);
+		
+		var newAreaCuring = newValidatorCuring = newAdminCuring = newValidatorFuelLoad = undefined;
+		newAreaCuring = request.object.get("AreaCuring");
+		newValidatorCuring = request.object.get("ValidatorCuring");
+		newAdminCuring = request.object.get("AdminCuring");
+		newValidatorFuelLoad = request.object.get("ValidatorFuelLoad");
+					
+		console.log("* NEW AreaCuring = " + newAreaCuring);
+		console.log("* NEW ValidatorCuring = " + newValidatorCuring);
+		console.log("* NEW AdminCuring = " + newAdminCuring);
+		console.log("* NEW ValidatorFuelLoad = " + newValidatorFuelLoad);
+		
+		if ( (newAreaCuring == undefined) && (newValidatorCuring == undefined) && (newAdminCuring == undefined) && (newValidatorFuelLoad == undefined) ) {
+			console.log("This Observation is to be deleted  - objectId = " + objId);
+			var queryObservation = new Parse.Query("GCUR_OBSERVATION");
+			queryObservation.equalTo("objectId", objId);
+			queryObservation.first({
+				success: function(object) {
+					// Successfully retrieved the existing object
+					console.log("* Observation Object has been retrieved. ");
+					// Delete this object
+					object.destroy({
+						success: function(myObject) {
+							// The object was deleted from the Parse Cloud.
+							console.log("* Observation Object has been successfully deleted as there was no curing values or validator's fuel load value. ");
+							response.success();
+						},
+						error: function(myObject, error) {
+							// The delete failed.
+							// error is a Parse.Error with an error code and message.
+							response.error("Error: " + error.code + " " + error.message);
+						}
+					});
+					
+					
+				},
+				error: function(error) {
+					console.log("### Observation Object has NOT been retrieved. ");
+					response.error("Error: " + error.code + " " + error.message);
+				}
+			});
+		} else {
+			response.success();
+		}
+	}
 });
 
 /**
