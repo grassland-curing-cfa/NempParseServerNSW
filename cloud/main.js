@@ -436,14 +436,28 @@ Parse.Cloud.define("deleteUserByUsername", function(request, response) {
  * Populate all ShareBy{STATE} columns available by "True" beforeSave a new Observation is added
  */
 Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
-	console.log("*** beforeSave triggered on GCUR_OBSERVATION");
+	var objId = request.object.id;
+	var loc = request.object.get("Location");
+	var locObjId = loc.id;
+	console.log("*** beforeSave triggered on GCUR_OBSERVATION for Location: " + locObjId);
+	
+	var newAreaCuring = newValidatorCuring = newAdminCuring = newValidatorFuelLoad = undefined;
+	newAreaCuring = request.object.get("AreaCuring");
+	newValidatorCuring = request.object.get("ValidatorCuring");
+	newAdminCuring = request.object.get("AdminCuring");
+	newValidatorFuelLoad = request.object.get("ValidatorFuelLoad");
+				
+	console.log("* NEW AreaCuring = " + newAreaCuring);
+	console.log("* NEW ValidatorCuring = " + newValidatorCuring);
+	console.log("* NEW AdminCuring = " + newAdminCuring);
+	console.log("* NEW ValidatorFuelLoad = " + newValidatorFuelLoad);
+	
 	Parse.Cloud.useMasterKey();
 	sharedWithJurisArr = [];
 		
 	if(request.object.isNew()) {
 		// Adding a new GCUR_OBSERVATION object
-		var loc = request.object.get("Location");
-		console.log("This Observation is new. Location objectId = " + loc.id);
+		console.log("Adding a new Observation.);
 		var sharedJurisSettingsQ = new Parse.Query("GCUR_SHARED_JURIS_SETTINGS");
 		
 		sharedJurisSettingsQ.find().then(function(sjsObjs) {
@@ -467,21 +481,7 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 		});
 	} else {
 		// Updating an existing GCUR_OBSERVATION object
-		
-		var objId = request.object.id;
-		var loc = request.object.get("Location");
-		console.log("This Observation already exists: objectId = " + objId + ", Location objectId = " + loc.id);
-		
-		var newAreaCuring = newValidatorCuring = newAdminCuring = newValidatorFuelLoad = undefined;
-		newAreaCuring = request.object.get("AreaCuring");
-		newValidatorCuring = request.object.get("ValidatorCuring");
-		newAdminCuring = request.object.get("AdminCuring");
-		newValidatorFuelLoad = request.object.get("ValidatorFuelLoad");
-					
-		console.log("* NEW AreaCuring = " + newAreaCuring);
-		console.log("* NEW ValidatorCuring = " + newValidatorCuring);
-		console.log("* NEW AdminCuring = " + newAdminCuring);
-		console.log("* NEW ValidatorFuelLoad = " + newValidatorFuelLoad);
+		console.log("*** Updating an existing Observation. objectId = " + objId);
 		
 		if ( (newAreaCuring == undefined) && (newValidatorCuring == undefined) && (newAdminCuring == undefined) && (newValidatorFuelLoad == undefined) ) {
 			console.log("This Observation is to be deleted  - objectId = " + objId);
@@ -489,13 +489,11 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 			queryObservation.equalTo("objectId", objId);
 			queryObservation.first({
 				success: function(object) {
-					// Successfully retrieved the existing object
-					console.log("* Observation Object has been retrieved. ");
 					// Delete this object
 					object.destroy({
 						success: function(myObject) {
 							// The object was deleted from the Parse Cloud.
-							console.log("* Observation Object has been successfully deleted as there was no curing values or validator's fuel load value. ");
+							console.log("*** Observation Object has been successfully deleted as there was no curing values or validator's fuel load value. ");
 							response.success();
 						},
 						error: function(myObject, error) {
@@ -519,10 +517,11 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 });
 
 Parse.Cloud.afterSave("GCUR_OBSERVATION", function(request, response) {
-	console.log("*** afterSave triggered on GCUR_OBSERVATION");
-	console.log(request);
-	console.log("*** objectId: " + request.object.id);
-	console.log("*** Location objectId: " + request.object.get("Location").id);
+	var objId = request.object.id;
+	var loc = request.object.get("Location");
+	var locObjId = loc.id;
+	var locName = loc.get("LocationName");
+	console.log("*** afterSave triggered on GCUR_OBSERVATION for Location: " + locObjId + " - " + locName);
 	
 });
 
