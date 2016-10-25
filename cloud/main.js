@@ -521,8 +521,8 @@ Parse.Cloud.afterSave("GCUR_OBSERVATION", function(request, response) {
 	var loc = request.object.get("Location");
 	var locObjId = loc.id;
 	var locString = JSON.stringify(loc);
-	console.log("*** afterSave triggered on GCUR_OBSERVATION " + objId + " for Location " + locObjId + " - " + locString);
-	
+	console.log("*** afterSave triggered on GCUR_OBSERVATION [" + objId + "] for Location [" + locObjId + "] - " + locString);
+	console.log(JSON.stringify(request.object));
 });
 
 /**
