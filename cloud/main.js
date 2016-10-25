@@ -516,14 +516,14 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 	}
 });
 
+/*
 Parse.Cloud.afterSave("GCUR_OBSERVATION", function(request, response) {
 	var objId = request.object.id;
 	var loc = request.object.get("Location");
 	var locObjId = loc.id;
-	var locString = JSON.stringify(loc);
-	console.log("*** afterSave triggered on GCUR_OBSERVATION [" + objId + "] for Location [" + locObjId + "] - " + locString);
-	console.log(JSON.stringify(request.object));
+	console.log("*** afterSave triggered on GCUR_OBSERVATION [" + objId + "] for Location [" + locObjId + "]);
 });
+*/
 
 /**
  * Retrieve shared infos for shared locations for State
