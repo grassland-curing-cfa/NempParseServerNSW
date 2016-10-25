@@ -470,7 +470,7 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 		
 		var objId = request.object.id;
 		var loc = request.object.get("Location");
-		console.log("This Observation already exists: objectId = " + objId + ", Location objectId = " + loc.get("LocationName"));
+		console.log("This Observation already exists: objectId = " + objId + ", Location JSON = " + loc.toJSON());
 		
 		var newAreaCuring = newValidatorCuring = newAdminCuring = newValidatorFuelLoad = undefined;
 		newAreaCuring = request.object.get("AreaCuring");
