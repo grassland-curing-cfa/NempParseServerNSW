@@ -443,7 +443,7 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 	if(request.object.isNew()) {
 		// Adding a new GCUR_OBSERVATION object
 		var loc = request.object.get("Location");
-		console.log("This Observation is new. " + loc.id);
+		console.log("This Observation is new. Location objectId = " + loc.id);
 		var sharedJurisSettingsQ = new Parse.Query("GCUR_SHARED_JURIS_SETTINGS");
 		
 		sharedJurisSettingsQ.find().then(function(sjsObjs) {
@@ -469,7 +469,8 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 		// Updating an existing GCUR_OBSERVATION object
 		
 		var objId = request.object.id;
-		console.log("This Observation exists already - objectId = " + objId);
+		var loc = request.object.get("Location");
+		console.log("This Observation already exists: objectId = " + objId + ", Location objectId = " + loc.get("LocationName"));
 		
 		var newAreaCuring = newValidatorCuring = newAdminCuring = newValidatorFuelLoad = undefined;
 		newAreaCuring = request.object.get("AreaCuring");
