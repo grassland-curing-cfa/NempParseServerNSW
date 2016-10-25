@@ -441,6 +441,7 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 	sharedWithJurisArr = [];
 	
 	var currUser = request.user;
+	console.log(request);
 	console.log("*** User objectId: " + currUser.id);
 	
 	if(request.object.isNew()) {
