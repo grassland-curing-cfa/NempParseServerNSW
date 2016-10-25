@@ -442,7 +442,7 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 	
 	var currUser = request.user;
 	console.log(request);
-	console.log("*** User objectId: " + currUser.id);
+	console.log("*** User objectId: " + currUser.id + "; " + currUser.getSessionToken());
 	
 	if(request.object.isNew()) {
 		// Adding a new GCUR_OBSERVATION object
