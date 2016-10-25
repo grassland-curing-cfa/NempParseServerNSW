@@ -457,7 +457,7 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 		
 	if(request.object.isNew()) {
 		// Adding a new GCUR_OBSERVATION object
-		console.log("Adding a new Observation.);
+		console.log("Adding a new Observation.");
 		var sharedJurisSettingsQ = new Parse.Query("GCUR_SHARED_JURIS_SETTINGS");
 		
 		sharedJurisSettingsQ.find().then(function(sjsObjs) {
