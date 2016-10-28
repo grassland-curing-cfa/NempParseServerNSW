@@ -456,10 +456,7 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 	newAdminCuring = request.object.get("AdminCuring");
 	newValidatorFuelLoad = request.object.get("ValidatorFuelLoad");
 				
-	console.log("* NEW AreaCuring = " + newAreaCuring);
-	console.log("* NEW ValidatorCuring = " + newValidatorCuring);
-	console.log("* NEW AdminCuring = " + newAdminCuring);
-	console.log("* NEW ValidatorFuelLoad = " + newValidatorFuelLoad);
+	console.log("* AreaCuring[ " + newAreaCuring + "], ValidatorCuring[" + newValidatorCuring + "], AdminCuring[" + newAdminCuring + "], ValidatorFuelLoad[" + newValidatorFuelLoad + "]");
 	
 	Parse.Cloud.useMasterKey();
 	sharedWithJurisArr = [];
@@ -490,10 +487,10 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 		});
 	} else {
 		// Updating an existing GCUR_OBSERVATION object
-		console.log("*** Updating an existing Observation. objectId = " + objId);
+		console.log("*** Updating an existing Observation. GCUR_OBSERVATION objectId = " + objId);
 		
 		if ( (newAreaCuring == undefined) && (newValidatorCuring == undefined) && (newAdminCuring == undefined) && (newValidatorFuelLoad == undefined) ) {
-			console.log("This Observation is to be deleted  - objectId = " + objId);
+			console.log("* This Observation is to be deleted  - objectId = " + objId);
 			var queryObservation = new Parse.Query("GCUR_OBSERVATION");
 			queryObservation.equalTo("objectId", objId);
 			queryObservation.first({
