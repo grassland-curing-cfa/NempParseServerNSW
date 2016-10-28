@@ -953,12 +953,10 @@ Parse.Cloud.define("updateSharedByInfo", function(request, response) {
  *  when a GCUR_LOCATION is deleted
  */
 Parse.Cloud.afterDelete("GCUR_LOCATION", function(request) {
-	Parse.User.logIn(SUPERUSER, SUPERPASSWORD).then(function(user) {
-		query = new Parse.Query("GCUR_OBSERVATION");
-		query.equalTo("Location", request.object);
-		query.limit(1000);
-		return query.find();
-	}).then(function(observations) {
+	query = new Parse.Query("GCUR_OBSERVATION");
+	query.equalTo("Location", request.object);
+	query.limit(1000);
+	query.find().then(function(observations) {
 		return Parse.Object.destroyAll(observations);
 	}).then(function() {
 		console.log('All associated GCUR_OBSERVATION records for the deleted GCUR_LOCATION have been deleted.');
