@@ -2598,15 +2598,13 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 	
 	console.log("*** acceptAllObserverCurings function called by Validator [" + validatorObjId + "]");
 	
-	Parse.User.logIn(SUPERUSER, SUPERPASSWORD).then(function(user) {
-		var queryObservation = new Parse.Query("GCUR_OBSERVATION");
-		queryObservation.equalTo("ObservationStatus", 0);	// All current observation records
-		queryObservation.greaterThanOrEqualTo("AreaCuring", 0);
-		queryObservation.limit(1000);
-		// Include the Location data with each GCUR_OBSERVATION
-		queryObservation.include("Location");
-		return queryObservation.find();
-	}).then(function(results) {
+	var queryObservation = new Parse.Query("GCUR_OBSERVATION");
+	queryObservation.equalTo("ObservationStatus", 0);	// All current observation records
+	queryObservation.greaterThanOrEqualTo("AreaCuring", 0);
+	queryObservation.limit(1000);
+	// Include the Location data with each GCUR_OBSERVATION
+	queryObservation.include("Location");
+	queryObservation.find().then(function(results) {
 		var affectedObsCount = 0;
 		
 		for (var i = 0; i < results.length; i ++) {
