@@ -2597,6 +2597,10 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 	var districtNo = request.params.districtNo;				// If districtNo == ALL_DISTRICT, validate all active locations.
 	
 	console.log("*** acceptAllObserverCurings function called by Validator [" + validatorObjId + "]");
+	if (request.user != undefined) {
+		var sessionToken = request.user.getSessionToken();
+		console.log("* request.user.getSessionToken() = " + sessionToken);
+	}
 	
 	var queryObservation = new Parse.Query("GCUR_OBSERVATION");
 	queryObservation.equalTo("ObservationStatus", 0);	// All current observation records
@@ -2642,15 +2646,16 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 		}
 		
 		Parse.Object.saveAll(results, {
+			sessionToken: sessionToken,
 		    success: function(list) {
 		        // All the objects were saved.
 		    	response.success(affectedObsCount);  //saveAll is now finished and we can properly exit with confidence :-)
-		      },
-		      error: function(error) {
-		        // An error occurred while saving one of the objects.
-		    	  response.error("Error: " + error.code + " " + error.message);
-		      },
-		    });
+		    },
+		    error: function(error) {
+		    	// An error occurred while saving one of the objects.
+		    	response.error("Error: " + error.code + " " + error.message);
+		    },
+		});
 		
 		//response.success(results.length);
 	}, function(error) {
