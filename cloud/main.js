@@ -392,20 +392,17 @@ Parse.Cloud.define("getUsernameFromId", function(request, response) {
 });
 
 Parse.Cloud.define("isLocationNameExist", function(request, response) {
-  // Log-in required dued to ACL set on GCUR_LOCATION table with Roles and Users
-  Parse.User.logIn(SUPERUSER, SUPERPASSWORD).then(function(user) {
-    var query = new Parse.Query("GCUR_LOCATION");
+	var query = new Parse.Query("GCUR_LOCATION");
     query.equalTo("LocationName", request.params.locationName);
     query.limit(1000);
-    return query.find();
-  }).then(function(results) {
-    if (results.length > 0)
-      response.success(results[0]);
-    else
-      response.success(new Object());
-  }, function(error) {
-    response.error("Location table lookup failed");
-  });
+    query.find().then(function(results) {
+    	if (results.length > 0)
+    		response.success(results[0]);
+    	else
+    		response.success(new Object());
+    }, function(error) {
+    	response.error("GCUR_LOCATION table lookup failed");
+    });
 });
 
 Parse.Cloud.define("deleteUserByUsername", function(request, response) {
