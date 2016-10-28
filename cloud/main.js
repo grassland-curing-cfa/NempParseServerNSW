@@ -436,14 +436,14 @@ Parse.Cloud.define("deleteUserByUsername", function(request, response) {
  * Populate all ShareBy{STATE} columns available by "True" beforeSave a new Observation is added
  */
 Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
-	console.log("--- beforeSave ---");
-	console.log(request);
-	console.log("---");
-	
 	var objId = request.object.id;
 	var loc = request.object.get("Location");
 	var locObjId = loc.id;
 	console.log("*** beforeSave triggered on GCUR_OBSERVATION for Location: " + locObjId);
+	
+	if (request.user != undefined) {
+		console.log("*** beforeSave triggered by _User: " + request.user.id);
+	}
 	
 	var newAreaCuring = newValidatorCuring = newAdminCuring = newValidatorFuelLoad = undefined;
 	newAreaCuring = request.object.get("AreaCuring");
@@ -520,16 +520,14 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 	}
 });
 
-
+/*
 Parse.Cloud.afterSave("GCUR_OBSERVATION", function(request, response) {
-	console.log("--- afterSave ---");
-	console.log(request);
-	console.log("---");
-	//var objId = request.object.id;
-	//var loc = request.object.get("Location");
-	//var locObjId = loc.id;
-	//console.log("*** afterSave triggered on GCUR_OBSERVATION [" + objId + "] for Location [" + locObjId + "]);
+	var objId = request.object.id;
+	var loc = request.object.get("Location");
+	var locObjId = loc.id;
+	console.log("*** afterSave triggered on GCUR_OBSERVATION [" + objId + "] for Location [" + locObjId + "]);
 });
+*/
 
 /**
  * Retrieve shared infos for shared locations for State
