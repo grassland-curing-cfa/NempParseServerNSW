@@ -436,8 +436,6 @@ Parse.Cloud.define("deleteUserByUsername", function(request, response) {
  * Populate all ShareBy{STATE} columns available by "True" beforeSave a new Observation is added
  */
 Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
-	console.log("*** beforeSave triggered on GCUR_OBSERVATION");
-	
 	var objId = request.object.id;
 	var loc = request.object.get("Location");
 	
@@ -447,7 +445,7 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 	}
 	
 	if (request.user != undefined) {
-		console.log("*** beforeSave triggered by _User: " + request.user.id);
+		console.log("*** beforeSave requested by _User: " + request.user.id);
 	}
 	
 	var newAreaCuring = newValidatorCuring = newAdminCuring = newValidatorFuelLoad = undefined;
@@ -458,7 +456,7 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 				
 	console.log("* AreaCuring[ " + newAreaCuring + "], ValidatorCuring[" + newValidatorCuring + "], AdminCuring[" + newAdminCuring + "], ValidatorFuelLoad[" + newValidatorFuelLoad + "]");
 	
-	Parse.Cloud.useMasterKey();
+	//Parse.Cloud.useMasterKey();
 	sharedWithJurisArr = [];
 		
 	if(request.object.isNew()) {
@@ -490,7 +488,6 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 		console.log("*** Updating an existing Observation. GCUR_OBSERVATION objectId = " + objId);
 		
 		if ( (newAreaCuring == undefined) && (newValidatorCuring == undefined) && (newAdminCuring == undefined) && (newValidatorFuelLoad == undefined) ) {
-			console.log("* This Observation is to be deleted  - objectId = " + objId);
 			var queryObservation = new Parse.Query("GCUR_OBSERVATION");
 			queryObservation.equalTo("objectId", objId);
 			queryObservation.first({
@@ -2597,9 +2594,11 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 	var districtNo = request.params.districtNo;				// If districtNo == ALL_DISTRICT, validate all active locations.
 	
 	console.log("*** acceptAllObserverCurings function called by Validator [" + validatorObjId + "]");
+	
+	var sessionToken = undefined;
 	if (request.user != undefined) {
-		var sessionToken = request.user.getSessionToken();
-		console.log("* request.user.getSessionToken() = " + sessionToken);
+		sessionToken = request.user.getSessionToken();
+		console.log("* request.user.id = " + request.user.id);
 	}
 	
 	var queryObservation = new Parse.Query("GCUR_OBSERVATION");
