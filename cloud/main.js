@@ -436,10 +436,15 @@ Parse.Cloud.define("deleteUserByUsername", function(request, response) {
  * Populate all ShareBy{STATE} columns available by "True" beforeSave a new Observation is added
  */
 Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
+	console.log("*** beforeSave triggered on GCUR_OBSERVATION");
+	
 	var objId = request.object.id;
 	var loc = request.object.get("Location");
-	var locObjId = loc.id;
-	console.log("*** beforeSave triggered on GCUR_OBSERVATION for Location: " + locObjId);
+	
+	if (loc != undefined) {
+		var locObjId = loc.id;
+		console.log("*** beforeSave triggered on GCUR_LOCATION: " + locObjId);
+	}
 	
 	if (request.user != undefined) {
 		console.log("*** beforeSave triggered by _User: " + request.user.id);
