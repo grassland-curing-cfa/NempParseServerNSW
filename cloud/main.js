@@ -2596,6 +2596,8 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 	var validatorObjId = request.params.validatorObjId;		// String
 	var districtNo = request.params.districtNo;				// If districtNo == ALL_DISTRICT, validate all active locations.
 	
+	console.log("*** acceptAllObserverCurings function called by Validator [" + validatorObjId + "]");
+	
 	Parse.User.logIn(SUPERUSER, SUPERPASSWORD).then(function(user) {
 		var queryObservation = new Parse.Query("GCUR_OBSERVATION");
 		queryObservation.equalTo("ObservationStatus", 0);	// All current observation records
