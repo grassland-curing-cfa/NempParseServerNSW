@@ -986,12 +986,10 @@ Parse.Cloud.afterDelete("GCUR_LOCATION", function(request) {
 Parse.Cloud.afterDelete(Parse.User, function(request) {
 	var mmrObsvrLocsCount;
 	var mmrUsrRoleCount;
-	Parse.User.logIn(SUPERUSER, SUPERPASSWORD).then(function(user) {
-		query = new Parse.Query("GCUR_MMR_OBSERVER_LOCATION");
-		query.equalTo("Observer", request.object);
-		query.limit(1000);
-		return query.find();
-	}).then(function(mmr_obsvr_locs) {
+	query = new Parse.Query("GCUR_MMR_OBSERVER_LOCATION");
+	query.equalTo("Observer", request.object);
+	query.limit(1000);
+	query.find().then(function(mmr_obsvr_locs) {
 		mmrObsvrLocsCount = mmr_obsvr_locs.length;
 		return Parse.Object.destroyAll(mmr_obsvr_locs);
 	}).then(function() {
