@@ -517,13 +517,30 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 });
 
 /*
+ * after a new Observation is added
+ */
 Parse.Cloud.afterSave("GCUR_OBSERVATION", function(request, response) {
 	var objId = request.object.id;
 	var loc = request.object.get("Location");
 	var locObjId = loc.id;
 	console.log("*** afterSave triggered on GCUR_OBSERVATION [" + objId + "] for Location [" + locObjId + "]");
+	
+	if (request.user != undefined) {
+		var queryUser = new Parse.Query(Parse.User);
+		queryUser.equalTo("objectId", request.user.id);
+		
+		// Use the new "useMasterKey" option in the Parse Server Cloud Code to bypass ACLs or CLPs.
+		queryUser.first({ useMasterKey: true }).then(function (user) {
+			var userName = user.get("username");
+			console.log("*** afterSave GCUR_OBSERVATION requested by _User [" + userName + "] [" + request.user.id + "]");
+		}, function(error) {
+			console.log("*** afterSave GCUR_OBSERVATION requested by _User [" + request.user.id + "]");
+			console.error("Parse.User table lookup failed. Error: " + error.code + " " + error.message);
+		});
+	} else {
+		console.log("*** afterSave GCUR_OBSERVATION. Requesting user is undefined.");
+	}
 });
-*/
 
 /*
  * after a new Location is added
@@ -539,9 +556,9 @@ Parse.Cloud.afterSave("GCUR_LOCATION", function(request, response) {
 		// Use the new "useMasterKey" option in the Parse Server Cloud Code to bypass ACLs or CLPs.
 		queryUser.first({ useMasterKey: true }).then(function (user) {
 			var userName = user.get("username");
-			console.log("*** afterSave GCUR_LOCATION [" + locName + "] [" + objId + "] requested by _User: " + userName);
+			console.log("*** afterSave GCUR_LOCATION [" + locName + "] [" + objId + "] requested by _User [" + userName + "] [" + request.user.id + "]");
 		}, function(error) {
-			console.log("*** afterSave GCUR_LOCATION [" + locName + "] [" + objId + "] requested by _User: " + request.user.id);
+			console.log("*** afterSave GCUR_LOCATION [" + locName + "] [" + objId + "] requested by _User [" + request.user.id + "]");
 			console.error("Parse.User table lookup failed. Error: " + error.code + " " + error.message);
 		});
 	} else {
