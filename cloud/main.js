@@ -525,19 +525,6 @@ Parse.Cloud.afterSave("GCUR_OBSERVATION", function(request, response) {
 });
 */
 
-Parse.Cloud.beforeSave("GCUR_LOCATION", function(request, response) {
-	var objId = request.object.id;
-	var locName = request.object.get("LocationName");
-
-	console.log("*** beforeSave triggered on GCUR_LOCATION [" + objId + "]");
-	
-	if (request.user != undefined) {
-		console.log("*** beforeSave GCUR_LOCATION [" + locName + "] requested by _User: " + request.user.id);
-	}
-	
-	response.success();
-});
-
 /*
  * after a new Location is added
  */
