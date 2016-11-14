@@ -536,9 +536,16 @@ Parse.Cloud.afterSave("GCUR_LOCATION", function(request, response) {
 	
 	if (request.user != undefined) {
 		console.log("*** afterSave GCUR_LOCATION [" + locName + "] requested by _User: " + request.user.id);
+		
+		var queryUser = new Parse.Query(Parse.User);
+		queryUser.equalTo("objectId", request.user.id);
+		queryUser.first().then(function (user) {
+			var userName = user.get("username");
+			console.log("*** afterSave GCUR_LOCATION [" + locName + "] requested by _User: " + userName);
+		}, function(error) {
+			console.error("Error: " + error.code + " " + error.message);
+		});
 	}
-	
-	response.success();
 });
 
 /**
