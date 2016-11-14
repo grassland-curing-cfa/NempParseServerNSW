@@ -532,8 +532,10 @@ Parse.Cloud.beforeSave("GCUR_LOCATION", function(request, response) {
 	console.log("*** beforeSave triggered on GCUR_LOCATION [" + objId + "]");
 	
 	if (request.user != undefined) {
-		console.log("*** afterSave GCUR_LOCATION [" + locName + "] requested by _User: " + request.user.id);
+		console.log("*** beforeSave GCUR_LOCATION [" + locName + "] requested by _User: " + request.user.id);
 	}
+	
+	response.success();
 });
 
 /*
@@ -548,6 +550,8 @@ Parse.Cloud.afterSave("GCUR_LOCATION", function(request, response) {
 	if (request.user != undefined) {
 		console.log("*** afterSave GCUR_LOCATION [" + locName + "] requested by _User: " + request.user.id);
 	}
+	
+	response.success();
 });
 
 /**
