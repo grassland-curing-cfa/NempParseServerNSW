@@ -969,6 +969,8 @@ Parse.Cloud.define("updateSharedByInfo", function(request, response) {
  *  when a GCUR_LOCATION is deleted
  */
 Parse.Cloud.afterDelete("GCUR_LOCATION", function(request) {
+	console.log("afterDelete is called on GCUR_LOCATION");
+	
 	query = new Parse.Query("GCUR_OBSERVATION");
 	query.equalTo("Location", request.object);
 	query.limit(1000);
