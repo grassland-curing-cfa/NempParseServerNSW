@@ -539,7 +539,7 @@ Parse.Cloud.afterSave("GCUR_LOCATION", function(request, response) {
 		
 		var queryUser = new Parse.Query(Parse.User);
 		queryUser.equalTo("objectId", request.user.id);
-		queryUser.first().then(function (user) {
+		queryUser.first({ useMasterKey: true }).then(function (user) {
 			var userName = user.get("username");
 			console.log("*** afterSave GCUR_LOCATION [" + locName + "] requested by _User: " + userName);
 		}, function(error) {
