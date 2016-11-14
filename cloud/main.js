@@ -2631,7 +2631,7 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 	var validatorObjId = request.params.validatorObjId;		// String
 	var districtNo = request.params.districtNo;				// If districtNo == ALL_DISTRICT, validate all active locations.
 	
-	console.log("*** acceptAllObserverCurings function called by Validator [" + validatorObjId + "]");
+	console.log("*** acceptAllObserverCurings function called by Validator [" + validatorObjId + "] for District " + districtNo);
 	
 	var sessionToken = undefined;
 	if (request.user != undefined) {
