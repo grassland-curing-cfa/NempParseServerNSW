@@ -2685,6 +2685,8 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 		Parse.Object.saveAll(results, {
 			sessionToken: sessionToken,
 		    success: function(list) {
+		    	console.log("*** Count of affected GCUR_OBSERVATION records is " + affectedObsCount);
+		    	
 		        // All the objects were saved.
 		    	response.success(affectedObsCount);  //saveAll is now finished and we can properly exit with confidence :-)
 		    },
