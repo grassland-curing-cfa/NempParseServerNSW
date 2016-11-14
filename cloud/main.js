@@ -532,19 +532,20 @@ Parse.Cloud.afterSave("GCUR_LOCATION", function(request, response) {
 	var objId = request.object.id;
 	var locName = request.object.get("LocationName");
 
-	console.log("*** afterSave triggered on GCUR_LOCATION [" + objId + "]");
-	
 	if (request.user != undefined) {
-		console.log("*** afterSave GCUR_LOCATION [" + locName + "] requested by _User: " + request.user.id);
-		
 		var queryUser = new Parse.Query(Parse.User);
 		queryUser.equalTo("objectId", request.user.id);
+		
+		// Use the new "useMasterKey" option in the Parse Server Cloud Code to bypass ACLs or CLPs.
 		queryUser.first({ useMasterKey: true }).then(function (user) {
 			var userName = user.get("username");
-			console.log("*** afterSave GCUR_LOCATION [" + locName + "] requested by _User: " + userName);
+			console.log("*** afterSave GCUR_LOCATION [" + locName + "] [" + objId + "] requested by _User: " + userName);
 		}, function(error) {
-			console.error("Error: " + error.code + " " + error.message);
+			console.log("*** afterSave GCUR_LOCATION [" + locName + "] [" + objId + "] requested by _User: " + request.user.id);
+			console.error("Parse.User table lookup failed. Error: " + error.code + " " + error.message);
 		});
+	} else {
+		console.log("*** afterSave GCUR_LOCATION [" + locName + "] [" + objId + "]. Requesting user is undefined.");
 	}
 });
 
