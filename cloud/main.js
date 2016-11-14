@@ -521,9 +521,23 @@ Parse.Cloud.afterSave("GCUR_OBSERVATION", function(request, response) {
 	var objId = request.object.id;
 	var loc = request.object.get("Location");
 	var locObjId = loc.id;
-	console.log("*** afterSave triggered on GCUR_OBSERVATION [" + objId + "] for Location [" + locObjId + "]);
+	console.log("*** afterSave triggered on GCUR_OBSERVATION [" + objId + "] for Location [" + locObjId + "]");
 });
 */
+
+/*
+ * after a new Location is added
+ */
+Parse.Cloud.afterSave("GCUR_LOCATION", function(request, response) {
+	var objId = request.object.id;
+	var locName = request.object.get("LocationName");
+
+	console.log("*** afterSave triggered on GCUR_OBSERVATION [" + objId + "] for Location [" + locObjId + "]");
+	
+	if (request.user != undefined) {
+		console.log("*** afterSave GCUR_LOCATION [" + locName + "] requested by _User: " + request.user.id);
+	}
+});
 
 /**
  * Retrieve shared infos for shared locations for State
