@@ -2631,7 +2631,7 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 	var validatorObjId = request.params.validatorObjId;		// String
 	var districtNo = request.params.districtNo;				// If districtNo == ALL_DISTRICT, validate all active locations.
 	
-	console.log("*** acceptAllObserverCurings function called by Validator [" + validatorObjId + "] for District " + districtNo);
+	console.log("*** acceptAllObserverCurings function called by Validator [" + validatorObjId + "]");
 	
 	var sessionToken = undefined;
 	if (request.user != undefined) {
@@ -2647,7 +2647,6 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 	queryObservation.include("Location");
 	queryObservation.find().then(function(results) {
 		var affectedObsCount = 0;
-		var affectedObsList = [];
 		
 		for (var i = 0; i < results.length; i ++) {
 			var obs = results[i];
@@ -2679,17 +2678,13 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 				obs.set("Validator", validator);
 				//obs.save();
 				
-				affectedObsList.push(obs);
 				affectedObsCount = affectedObsCount + 1;
 			}
 		}
 		
-		// Only save all affected obs
-		Parse.Object.saveAll(affectedObsList, {
+		Parse.Object.saveAll(results, {
 			sessionToken: sessionToken,
 		    success: function(list) {
-		    	console.log("*** Count of affected GCUR_OBSERVATION records is " + affectedObsCount);
-		    	
 		        // All the objects were saved.
 		    	response.success(affectedObsCount);  //saveAll is now finished and we can properly exit with confidence :-)
 		    },
