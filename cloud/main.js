@@ -2647,6 +2647,7 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 	queryObservation.include("Location");
 	queryObservation.find().then(function(results) {
 		var affectedObsCount = 0;
+		var affectedObsList = [];
 		
 		for (var i = 0; i < results.length; i ++) {
 			var obs = results[i];
@@ -2678,11 +2679,13 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 				obs.set("Validator", validator);
 				//obs.save();
 				
+				affectedObsList.push(obs);
 				affectedObsCount = affectedObsCount + 1;
 			}
 		}
 		
-		Parse.Object.saveAll(results, {
+		// Only save all affected obs
+		Parse.Object.saveAll(affectedObsList, {
 			sessionToken: sessionToken,
 		    success: function(list) {
 		    	console.log("*** Count of affected GCUR_OBSERVATION records is " + affectedObsCount);
