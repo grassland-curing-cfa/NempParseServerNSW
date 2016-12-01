@@ -1,14 +1,15 @@
 /*
  * Cloud code for "nemp-nsw-dev" connected to the "nemp_dev_nsw" MongoLab DB deployed on Heroku
  * Git repo: 				https://github.com/grassland-curing-cfa/NempParseServerNSW
- * Initial checkin date: 		23/02/2016
+ * Initial checkin date: 	23/02/2016
  * Following-up check date:	13/07/2016
 							18/07/2016
 							21/07/2016
 							25/07/2016: added "sendEmailRequestForValidation" function
 							26/08/2016: added use of "turf" package for spatial analysis and manipulation tools;
 										      updated "getPrevSimpleObsSharedInfoForState" & "getSharedPrevCuringForStateForInputToVISCA"
-              				21/11/2016: NEMP-1-150: added request.user to beforeSave and afterSave triggers for GCUR_OBSERVATION & GCUR_LOCATION classes
+							21/11/2016: NEMP-1-150: added request.user to beforeSave and afterSave triggers for GCUR_OBSERVATION & GCUR_LOCATION classes
+              01/12/2016: NEMP-1-154: Running the "applyValidationByException" Cloud function creates incorrect String on the "SharedBy" column of the GCUR_OBSERVATION table
  */
 
 var _ = require('underscore');
@@ -436,7 +437,7 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 				
 	console.log("* AreaCuring[ " + newAreaCuring + "], ValidatorCuring[" + newValidatorCuring + "], AdminCuring[" + newAdminCuring + "], ValidatorFuelLoad[" + newValidatorFuelLoad + "]");
 	
-	sharedWithJurisArr = [];
+	var sharedWithJurisArr = [];
 		
 	if(request.object.isNew()) {
 		// Adding a new GCUR_OBSERVATION object
