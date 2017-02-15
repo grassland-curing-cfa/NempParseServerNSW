@@ -31,6 +31,7 @@ var MG_KEY = process.env.MG_KEY;
 var CFA_NEMP_EMAIL = process.env.EMAIL_ADDR_CFA_NEMP;
 var CFA_GL_EMAIL = process.env.EMAIL_ADDR_CFA_GL;
 var RFS_FBA = process.env.EMAIL_ADDR_RFS_FBA;
+var CFA_GL_TEAM_EMAIL = 'grassland-team@cfa.vic.gov.au';
 var _IS_DAYLIGHT_SAVING = (process.env.IS_DAYLIGHT_SAVING == "1" ? true : false);     		// boolean indicates if it is now in Daylight Saving time
 var _IS_FIRE_DANGER_PERIOD = (process.env.IS_FIRE_DANGER_PERIOD == "1" ? true : false);     	// boolean indicates if it is now in the Fire Danger Period
 var GAE_APP_URL = process.env.GAE_APP_URL;			// The URL to the GAE app (appspot)
@@ -316,7 +317,7 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", function(request, respon
         mailgun.messages().send({
           from: RFS_FBA,
           to: RFS_FBA,
-          bcc: CFA_NEMP_EMAIL + ";" + CFA_GL_EMAIL + ";",
+          bcc: CFA_NEMP_EMAIL + ";" + CFA_GL_EMAIL + ";" + CFA_GL_TEAM_EMAIL + ";",
           subject: "New South Wales Grassland Curing Map - " + strToday,
           text: '',
           html: html
