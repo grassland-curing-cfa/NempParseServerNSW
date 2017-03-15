@@ -316,7 +316,7 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", function(request, respon
 
         mailgun.messages().send({
           from: RFS_FBA,
-          to: RFS_FBA,
+          to: RFS_FBA + ";" + process.env.ADDITIONAL_EMAILS_FOR_FINALISED_MAP,
           bcc: CFA_NEMP_EMAIL + ";" + CFA_GL_EMAIL + ";" + CFA_GL_TEAM_EMAIL,
           subject: "New South Wales Grassland Curing Map - " + strToday,
           text: '',
