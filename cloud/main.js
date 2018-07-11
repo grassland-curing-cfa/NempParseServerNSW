@@ -36,7 +36,10 @@ var _IS_DAYLIGHT_SAVING = (process.env.IS_DAYLIGHT_SAVING == "1" ? true : false)
 var _IS_FIRE_DANGER_PERIOD = (process.env.IS_FIRE_DANGER_PERIOD == "1" ? true : false);     	// boolean indicates if it is now in the Fire Danger Period
 var GAE_APP_URL = process.env.GAE_APP_URL;			// The URL to the GAE app (appspot)
 var _MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS = process.env.MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS;		// An obs with the FinalisedDate older than this number should not be returned and treated as Last Season data
- 
+
+var RESOLUTIONS = ["500", "6000"];
+var SUPERUSER_OBJECTID = "AucN1rSA60";
+
 //var SHARED_WITH_STATES = ["ACT", "QLD", "SA", "VIC"];
  
 // Use Parse.Cloud.define to define as many cloud functions as you want.
@@ -3116,6 +3119,195 @@ Parse.Cloud.define("applyValidationByException", function(request, response) {
 		response.success(createdNewObsIdList);
 	}, function(error) {
 		response.error("Error: " + error);
+	});
+});
+
+/**
+Automate RunModel by adding a RunModel given defined creteria.
+*/
+Parse.Cloud.define("automateRunModel", function(request, response) {
+	var executionResult = false;
+	var executionMsg = "";
+	var isJobAdded = false;
+
+	var ToCreate = false;
+	var ResToCreate = "";
+	
+	console.log("Triggering the Cloud Function 'automateRunModel'");
+	
+	// Get the parameters for startUTC and endUTC time period
+	var nowDt = new Date(new Date().toUTCString());
+	var today_utc_ts =  Date.UTC(nowDt.getUTCFullYear(), nowDt.getUTCMonth(), nowDt.getUTCDate(), 0, 0, 0);
+	var greaterThanDt = new Date(today_utc_ts);
+	console.log("Today starting at " + greaterThanDt);
+	
+	var queryRunModel = new Parse.Query("GCUR_RUNMODEL");
+	queryRunModel.greaterThan("createdAt", greaterThanDt);
+	queryRunModel.find().then(function(results) {
+		
+		switch (results.length) {
+		
+			// If no RunModel job has been added
+			case 0:
+				executionMsg += "No RunModel job was added. "
+				console.log(executionMsg);
+				
+				ToCreate = true;
+				ResToCreate = RESOLUTIONS[0];
+				break;
+			// If there is 1 RunModel job that has been added
+			case 1:
+				// If it has been completed
+				executionMsg += "One RunModel job was added. "
+				console.log(executionMsg);
+				
+				if (results[0].get("status") == 2) {
+					// If it has been also failed
+					if (results[0].get("jobResult") == false) {
+						executionMsg += "status is Completed. jobResult was false. "
+						console.log(executionMsg);
+						
+						ToCreate = true;
+						ResToCreate = results[0].get("resolution");;
+					}
+					// If it has been also successful
+					else {
+						executionMsg += "status is Completed. jobResult was true. "
+						console.log(executionMsg);
+						
+						ToCreate = true;
+						currRes = results[0].get("resolution");
+						ResToCreate = RESOLUTIONS.find(function(element) {
+							return element != currRes;
+						});
+					}
+					
+				} else {
+					executionMsg += "status is not Complete. So we will wait for this job to complete. No job to add. "
+					console.log(executionMsg);
+				}
+				
+				break; 
+			// If there have been more than 2 RunModel jobs added
+			default:
+				executionMsg += "More than 2 RunModel jobs have been added. "
+				console.log(executionMsg);
+			
+				var isAllJobsCompleted = true;
+				
+				for (var i = 0; i < results.length; i++) {
+					
+					// If any of the job was not complete (not started or in progress)
+					if (results[i].get("status") != 2) {
+						isAllJobsCompleted = false;
+						break;
+					}
+				}
+				
+				// If all jobs were already complete; we will find out the details.
+				if (isAllJobsCompleted) {
+					executionMsg += "All RunModel jobs were with status of complete. "
+					console.log(executionMsg);
+					
+					var predefined_rm_obs_list = [];
+					
+					for (var j = 0; j < RESOLUTIONS.length; j++) {
+						var predefined_rm_obs = {
+							"resolution" : RESOLUTIONS[j],
+							"status" : undefined,
+							"jobResult" : undefined,
+							"jobResultDetails" : undefined
+						}
+						
+						predefined_rm_obs_list.push(predefined_rm_obs);
+					}		
+					
+					for (var k = 0; k < predefined_rm_obs_list.length; k++) {
+						for (var i = 0; i < results.length; i++) {
+							if (results[i].get("resolution") == predefined_rm_obs_list[k]['resolution']) {
+								if (predefined_rm_obs_list[k]['jobResult'] != true) {
+									predefined_rm_obs_list[k]['status'] = results[i].get("status");
+									predefined_rm_obs_list[k]['jobResult'] = results[i].get("jobResult");
+									predefined_rm_obs_list[k]['jobResultDetails'] = results[i].get("jobResultDetails");
+								}
+							}
+						}
+					}
+					
+					executionMsg += "'" + JSON.stringify(predefined_rm_obs_list) + "' ";
+					console.log(executionMsg);
+					// Find out whether there is need to create a new RunModel job
+					for (var k = 0; k < predefined_rm_obs_list.length; k++) {
+
+						if (predefined_rm_obs_list[k]['status'] != undefined) {
+							// If this RunModel job was failed
+							if (predefined_rm_obs_list[k]['jobResult'] != true) {
+								ToCreate = true;
+								ResToCreate = predefined_rm_obs_list[k]['resolution'];
+								break;		// We always want to add a new RunModel model for those failed one first
+							} else
+								console.log(predefined_rm_obs_list[k]['resolution'] + ": " + predefined_rm_obs_list[k]['jobResult']);
+						} else {
+							ToCreate = true;
+							ResToCreate = predefined_rm_obs_list[k]['resolution'];
+						}
+					}
+				} else {
+					executionMsg += "There is at least one job with its status being not Complete. So we will wait for this job to complete. "
+					console.log(executionMsg);
+				}
+		}
+		
+		return Parse.Promise.as("Current RunModel jobs have been checked. Continue... ...");		
+	}).then(function() {
+		// Save a new RunModel job based on ResToCreate
+		if (ToCreate) {
+			var GCUR_RUNMODEL = Parse.Object.extend("GCUR_RUNMODEL");
+			var newRMJob = new GCUR_RUNMODEL();				// a new GCUR_RUNMODEL object to be saved
+			
+			// Had to add a fake user ... REQUIRE AMENDMENT!!!
+			var admin = new Parse.User();
+			admin.id = SUPERUSER_OBJECTID;
+			
+			newRMJob.save({
+				status: 0,
+				resolution: ResToCreate,
+				jobResult: false,
+				submittedBy: admin
+			}, {
+				useMasterKey: true,
+			
+				success: function(obj) {
+					// The save was successful.
+					isJobAdded = true;
+					executionMsg += "A new RunModel job with resolution of " + ResToCreate + " has been successfully saved. "
+					console.log(executionMsg);
+					response.success({"ToCreate": ToCreate, "ResToCreate": ResToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded});
+				},
+				
+				error: function(successful, error) {
+					// The save failed.  Error is an instance of Parse.Error.
+					executionMsg += "There was an error in saving a new RunModel job with resolution of " + ResToCreate;
+					console.log(executionMsg);
+					response.error({"ToCreate": ToCreate, "ResToCreate": ResToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded});
+				}
+			});
+		} else
+			response.success({"ToCreate": ToCreate, "ResToCreate": ResToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded});
+	}, function(error) {
+		// An error occurred while deleting one or more of the objects.
+		// If this is an aggregate error, then we can inspect each error
+		// object individually to determine the reason why a particular
+		// object was not deleted.
+	    if (error.code === Parse.Error.AGGREGATE_ERROR) {
+	    	for (var i = 0; i < error.errors.length; i++) {
+	          console.log("Couldn't delete " + error.errors[i].object.id +
+	            "due to " + error.errors[i].message);
+	        }
+	    } else {
+	    	console.log("Delete aborted because of " + error.message);
+	    }
+		response.success(false);
 	});
 });
 
