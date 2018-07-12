@@ -3408,14 +3408,14 @@ Parse.Cloud.define("automateFinaliseData", function(request, response) {
 						return (rm['status'] == 2) && (rm['jobResult'] == true);
 					});
 					
-					executionMsg += ". isRunModelsSuccessful = " + isRunModelsSuccessful + ". ";
-					console.log(executionMsg);
-					
 				} else {
 					executionMsg += "There is at least one RunModel job with its status being 'not Complete'. So we will wait for this job to complete. "
 					console.log(executionMsg);
 				}
 		}
+		
+		executionMsg += ". isRunModelsSuccessful = " + isRunModelsSuccessful + ". ";
+		console.log(executionMsg);
 		
 		if (isRunModelsSuccessful) {
 			return Parse.Promise.as("isRunModelsSuccessful is true!");
