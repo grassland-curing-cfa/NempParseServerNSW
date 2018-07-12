@@ -3312,6 +3312,200 @@ Parse.Cloud.define("automateRunModel", function(request, response) {
 });
 
 /**
+Automate FinaliseData by adding a FinaliseData given defined creteria.
+*/
+Parse.Cloud.define("automateFinaliseData", function(request, response) {
+	var executionResult = false;
+	var executionMsg = "";
+	var isJobAdded = false;
+
+	var isRunModelsSuccessful = false;
+	var ToCreate = false;
+	
+	console.log("Triggering the Cloud Function 'automateFinaliseData'");
+	
+	// Get the parameters for startUTC and endUTC time period
+	var nowDt = new Date(new Date().toUTCString());
+	var today_utc_ts =  Date.UTC(nowDt.getUTCFullYear(), nowDt.getUTCMonth(), nowDt.getUTCDate(), 0, 0, 0);
+	var greaterThanDt = new Date(today_utc_ts);
+	console.log("Today starting at " + greaterThanDt);
+	
+	// Query the GCUR_RUNMODEL table to find out if the RunModel jobs for both resolutions have been successfully run
+	// This is for double check to be more secure that we are not adding a FinaliseData job if RunModels were not successful.
+	var queryRunModel = new Parse.Query("GCUR_RUNMODEL");
+	queryRunModel.greaterThan("createdAt", greaterThanDt);
+	queryRunModel.find().then(function(results) {
+		
+		switch (results.length) {
+		
+			// If no RunModel job has been added
+			case 0:
+				executionMsg += "No RunModel job was added. FinaliseData job will not be added. ";
+				console.log(executionMsg);
+
+				break;
+				
+			// If there is 1 RunModel job that has been added
+			case 1:
+				// If it has been completed
+				executionMsg += "One RunModel job was added. FinaliseData job will not be added. ";
+				console.log(executionMsg);
+				
+				break;
+			
+			// If there have been more than 2 RunModel jobs added
+			default:
+				executionMsg += "More than 2 RunModel jobs have been added. "
+				console.log(executionMsg);
+			
+				var isAllJobsCompleted = true;
+				
+				for (var i = 0; i < results.length; i++) {
+					
+					// If any of the job was not complete (not started or in progress)
+					if (results[i].get("status") != 2) {
+						isAllJobsCompleted = false;
+						break;
+					}
+				}
+				
+				// If all jobs were already complete; we will find out the details.
+				if (isAllJobsCompleted) {
+					executionMsg += "All RunModel jobs were with status of complete. "
+					console.log(executionMsg);
+					
+					var predefined_rm_obs_list = [];
+					
+					for (var j = 0; j < RESOLUTIONS.length; j++) {
+						var predefined_rm_obs = {
+							"resolution" : RESOLUTIONS[j],
+							"status" : undefined,
+							"jobResult" : undefined,
+							"jobResultDetails" : undefined
+						}
+						
+						predefined_rm_obs_list.push(predefined_rm_obs);
+					}		
+					
+					for (var k = 0; k < predefined_rm_obs_list.length; k++) {
+						for (var i = 0; i < results.length; i++) {
+							if (results[i].get("resolution") == predefined_rm_obs_list[k]['resolution']) {
+								if (predefined_rm_obs_list[k]['jobResult'] != true) {
+									predefined_rm_obs_list[k]['status'] = results[i].get("status");
+									predefined_rm_obs_list[k]['jobResult'] = results[i].get("jobResult");
+									predefined_rm_obs_list[k]['jobResultDetails'] = results[i].get("jobResultDetails");
+								}
+							}
+						}
+					}
+					
+					executionMsg += "'" + JSON.stringify(predefined_rm_obs_list) + "' ";
+					console.log(executionMsg);
+					
+					// Find out whether RunModel jobs for both resolutions were already successful
+					isRunModelsSuccessful = predefined_rm_obs_list.every(function(rm) {
+						return (rm['status'] == 2) && (rm['jobResult'] == true);
+					});
+					
+					executionMsg += ". isRunModelsSuccessful = " + isRunModelsSuccessful + ". ";
+					console.log(executionMsg);
+					
+				} else {
+					executionMsg += "There is at least one RunModel job with its status being 'not Complete'. So we will wait for this job to complete. "
+					console.log(executionMsg);
+				}
+		}
+		
+		if (isRunModelsSuccessful) {
+			return Parse.Promise.as("isRunModelsSuccessful is true!");
+		} else {
+			return Parse.Promise.error("isRunModelsSuccessful is false!");	// Go straight to the error callback at the end
+		}		
+	}).then(function() {	
+		var queryFinaliseData = new Parse.Query("GCUR_FINALISEMODEL");
+		queryFinaliseData.greaterThan("createdAt", greaterThanDt);
+		return queryFinaliseData.find();
+	}).then(function(results) {			
+		switch (results.length) {
+			
+				// If no FinaliseData job has been added
+				case 0:
+					executionMsg += "No FinaliseData job was added. "
+					console.log(executionMsg);
+					
+					ToCreate = true;
+					break;
+				// If there is 1 FinaliseData job that has been added
+				case 1:
+					// If it has been completed
+					executionMsg += "One FinaliseData job was already added. "
+					console.log(executionMsg);
+					
+					if (results[0].get("status") == 2) {
+						// If it has been also failed
+						if (results[0].get("jobResult") == false) {
+							executionMsg += "status is Completed. jobResult was false. No FinaliseData job to add. "
+							console.log(executionMsg);
+						}
+						// If it has been also successful
+						else {
+							executionMsg += "status is Completed. jobResult was true. No FinaliseData job to add. "
+							console.log(executionMsg);
+						}
+						
+					} else {
+						executionMsg += "status is not Complete. So we will wait for this FinaliseData job to complete. No job to add. "
+						console.log(executionMsg);
+					}
+					
+					break; 
+				// If there have been more than 2 FinaliseData jobs added
+				default:
+					executionMsg += "More than 2 FinaliseData jobs have been added. No FinaliseData job to add. "
+					console.log(executionMsg);
+		}
+			
+		return Parse.Promise.as("Current FinaliseData jobs have been checked. Continue... ...");		
+	}).then(function() {
+		// Save a new FinalisedData job based on ResToCreate
+		if (ToCreate) {
+			var GCUR_FINALISEMODEL = Parse.Object.extend("GCUR_FINALISEMODEL");
+			var newFDJob = new GCUR_FINALISEMODEL();				// a new GCUR_FINALISEMODEL object to be saved
+			
+			// Had to add a fake user ... REQUIRE AMENDMENT!!!
+			var admin = new Parse.User();
+			admin.id = SUPERUSER_OBJECTID;
+			
+			newFDJob.save({
+				status: 0,
+				jobResult: false,
+				submittedBy: admin
+			}, {
+				useMasterKey: true,
+			
+				success: function(obj) {
+					// The save was successful.
+					isJobAdded = true;
+					executionMsg += "A new FinalisedData job has been successfully saved. "
+					console.log(executionMsg);
+					response.success({"ToCreate": ToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded});
+				},
+				
+				error: function(successful, error) {
+					// The save failed.  Error is an instance of Parse.Error.
+					executionMsg += "There was an error in saving a new FinalisedData job. ";
+					console.log(executionMsg);
+					response.error({"ToCreate": ToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded, 'error': error});
+				}
+			});
+		} else
+			response.success({"ToCreate": ToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded});
+	}, function(error) {
+		response.error({"ToCreate": ToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded, 'error': error});
+	});
+});
+
+/**
  * An Underscore utility function to find elements in array that are not in another array;
  * used in the cloud function "applyValidationByException"
  */
