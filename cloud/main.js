@@ -3506,6 +3506,26 @@ Parse.Cloud.define("automateFinaliseData", function(request, response) {
 	});
 });
 
+Parse.Cloud.job("myJob", function(request, status) {
+	// the params passed through the start request
+	const params = request.params;
+	// Headers from the request that triggered the job
+	const headers = request.headers;
+
+	// get the parse-server logger
+	const log = request.log;
+	
+	var queryObservation = new Parse.Query("GCUR_OBSERVATION");
+	queryObservation.count().then(function(count) {
+		// Mark the job as successful
+		// success and error only support string as parameters
+		status.success("GCUR_OBSERVATION COUNT: " + count);
+	}).catch(function(error) {
+		// Mark the job as errored
+		status.error("There was an error");
+	});
+});
+
 /**
  * An Underscore utility function to find elements in array that are not in another array;
  * used in the cloud function "applyValidationByException"
