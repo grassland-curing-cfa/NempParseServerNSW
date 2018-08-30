@@ -40,8 +40,6 @@ var _MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS = process.env.MAX_DAYS_ALLOWED_FOR_PREVIO
 
 var RESOLUTIONS = ["500", "6000"];
 var SUPERUSER_OBJECTID = "AucN1rSA60";
-
-//var SHARED_WITH_STATES = ["ACT", "QLD", "SA", "VIC"];
  
 // Use Parse.Cloud.define to define as many cloud functions as you want.
 // For example:
