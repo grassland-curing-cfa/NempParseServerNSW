@@ -2890,6 +2890,29 @@ Parse.Cloud.define("getDataReport", function(request, response) {
 	});
 });
 
+Parse.Cloud.define("getDataReport2", function(request, response) {
+	var finalisedModelObjectId = request.params.finalisedModelObjectId;
+	
+	var returnedObsList = [];
+	
+	var promise = undefined;
+	
+	if (finalisedModelObjectId == -9999) {
+		promise = Parse.Promise.as("Export current observations");
+	} else {
+		var queryFinaliseModel = new Parse.Query("GCUR_FINALISEMODEL");
+		queryFinaliseModel.equalTo("objectId", finalisedModelObjectId);
+		queryFinaliseModel.limit(1000);
+		promise = queryFinaliseModel.first();
+	}
+	
+	promise.then(function(val)  {
+		response.success(val);
+	}, function(error) {
+		response.error("Error: " + error.code + " " + error.message);
+	});
+});
+
 /**
  * Retrieve the detail about a FinaliseModel object by its input objectId
  */
