@@ -2897,7 +2897,7 @@ Parse.Cloud.define("getDataReport2", function(request, response) {
 	
 	var promise = undefined;
 	
-	if (finalisedModelObjectId == -9999) {
+	if (finalisedModelObjectId == "-9999") {
 		promise = Parse.Promise.as("Export current observations");
 	} else {
 		var queryFinaliseModel = new Parse.Query("GCUR_FINALISEMODEL");
