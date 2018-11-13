@@ -12,6 +12,7 @@
               				01/12/2016: NEMP-1-154: Running the "applyValidationByException" Cloud function creates incorrect String on the "SharedBy" column of the GCUR_OBSERVATION table
               							NEMP-1-151: Remove unnecessary Parse.User.logIn(SUPERUSER, SUPERPASSWORD) and Parse.Cloud.useMasterKey() in the Cloud function
               				11/07/2018: Created two cloud functions: "automateRunModel" & "automateFinaliseData" on the Parse Server for automating RunModel and FinaliseData jobs
+							13/11/2018: Updated the getDataReport function to allow exporting current observations at any point of time
  */
 
 var _ = require('underscore');
@@ -2796,7 +2797,8 @@ Parse.Cloud.define("getAllFinalisedDate", function(request, response) {
 
 /**
  * Get the downloadable observation report based on user-specified finalised model objectId
- */
+ * Deprecated
+ 
 Parse.Cloud.define("getDataReport", function(request, response) {
 	var finalisedModelObjectId = request.params.finalisedModelObjectId;
 	
@@ -2889,8 +2891,12 @@ Parse.Cloud.define("getDataReport", function(request, response) {
 		response.error("Error: " + error.code + " " + error.message);
 	});
 });
+*/
 
-Parse.Cloud.define("getDataReport2", function(request, response) {
+/**
+ * Get the downloadable observation report based on user-specified finalised model objectId
+ */
+Parse.Cloud.define("getDataReport", function(request, response) {
 	var finalisedModelObjectId = request.params.finalisedModelObjectId;
 	
 	var returnedObsList = [];
