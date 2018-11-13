@@ -2816,7 +2816,7 @@ Parse.Cloud.define("getDataReport", function(request, response) {
 		var startUTC = new Date(Date.UTC(year, month, date, 0, 0, 0));
 		var endUTC = new Date(Date.UTC(year, month, date, 23, 59, 59));
 		
-		queryObservation = new Parse.Query("GCUR_OBSERVATION");
+		var queryObservation = new Parse.Query("GCUR_OBSERVATION");
 		queryObservation.greaterThan("FinalisedDate", startUTC);
 		queryObservation.lessThan("FinalisedDate", endUTC);
 		queryObservation.include("Location");
@@ -2896,10 +2896,14 @@ Parse.Cloud.define("getDataReport2", function(request, response) {
 	var returnedObsList = [];
 	
 	var promise = undefined;
+	var flagExportCurrObs = "Export current observations";
+	
 	
 	if (finalisedModelObjectId == "-9999") {
-		promise = Parse.Promise.as("Export current observations");
+		console.log("*** To export current observations at this point of time.");
+		promise = Parse.Promise.as(flagExportCurrObs);
 	} else {
+		console.log("*** To export previous finalised observations.");
 		var queryFinaliseModel = new Parse.Query("GCUR_FINALISEMODEL");
 		queryFinaliseModel.equalTo("objectId", finalisedModelObjectId);
 		queryFinaliseModel.limit(1000);
@@ -2907,7 +2911,103 @@ Parse.Cloud.define("getDataReport2", function(request, response) {
 	}
 	
 	promise.then(function(val)  {
-		response.success(val);
+		var queryObservation = new Parse.Query("GCUR_OBSERVATION");
+		
+		// Export current obs
+		if (val == flagExportCurrObs) {
+			
+			queryObservation.equalTo("ObservationStatus", 0);			// Current week's observations
+			queryObservation.include("Location");
+			queryObservation.include("RateOfDrying");
+			queryObservation.limit(1000);
+			return queryObservation.find();
+		
+		} else {
+			var finalisedModel = val;
+			
+			var createdAt = finalisedModel.createdAt;
+		
+			var year = createdAt.getFullYear();
+			var month = createdAt.getMonth();
+			var date = createdAt.getDate();
+			
+			// Get all observations with FinalisedDate ranging between startUTC and endUTC time period
+			var startUTC = new Date(Date.UTC(year, month, date, 0, 0, 0));
+			var endUTC = new Date(Date.UTC(year, month, date, 23, 59, 59));
+			
+			queryObservation = new Parse.Query("GCUR_OBSERVATION");
+			queryObservation.greaterThan("FinalisedDate", startUTC);
+			queryObservation.lessThan("FinalisedDate", endUTC);
+			queryObservation.include("Location");
+			queryObservation.include("RateOfDrying");
+			queryObservation.limit(1000);
+			return queryObservation.find();
+		}
+	}.then(function(observations) {
+		for (var i = 0; i < observations.length; i ++) {
+			var location = undefined;
+			var locationName = undefined;
+			var lng = undefined;
+			var lat = undefined;
+			var areaCuring = undefined;
+			var validatorCuring = undefined;
+			var adminCuring = undefined;
+			var fuelContinuity = undefined;
+			var fuelQuantity = undefined;
+			var userFuelLoad = undefined;
+			var validatorFuelLoad = undefined;
+			var rainfall = undefined;
+			var rateOfDrying = undefined;
+			var comments = undefined;
+			
+			location = observations[i].get("Location");
+			locationName = location.get("LocationName");
+			lng = location.get("Lng");
+			lat = location.get("Lat");
+			
+			var observationStatus = observations[i].get("ObservationStatus");
+			
+			if (observations[i].has("AreaCuring"))
+				areaCuring = observations[i].get("AreaCuring");
+			if (observations[i].has("ValidatorCuring"))
+				validatorCuring = observations[i].get("ValidatorCuring");
+			if (observations[i].has("AdminCuring"))
+				adminCuring = observations[i].get("AdminCuring");
+			if (observations[i].has("FuelContinuity"))
+				fuelContinuity = observations[i].get("FuelContinuity");
+			if (observations[i].has("FuelQuantity"))
+				fuelQuantity = observations[i].get("FuelQuantity");
+			if (observations[i].has("UserFuelLoad"))
+				userFuelLoad = observations[i].get("UserFuelLoad");
+			if (observations[i].has("ValidatorFuelLoad"))
+				validatorFuelLoad = observations[i].get("ValidatorFuelLoad");
+			if (observations[i].has("Rainfall"))
+				rainfall =  observations[i].get("Rainfall");
+			if (observations[i].has("RateOfDrying"))
+				rateOfDrying = observations[i].get("RateOfDrying").get("rateOfDrying");
+			if (observations[i].has("Comments"))
+				comments = observations[i].get("Comments");
+			
+			var returnedObs = {
+					"locationName": locationName,
+					"lng": lng,
+					"lat": lat,
+					"areaCuring": areaCuring,
+					"validatorCuring": validatorCuring,
+					"adminCuring": adminCuring,
+					"fuelContinuity": fuelContinuity,
+					"fuelQuantity": fuelQuantity,
+					"userFuelLoad": userFuelLoad,
+					"validatorFuelLoad": validatorFuelLoad,
+					"rainfall": rainfall,
+					"rateOfDrying": rateOfDrying,
+					"comments": comments,
+					"observationStatus": observationStatus
+			};
+			returnedObsList.push(returnedObs);
+		}
+		
+	    response.success(returnedObsList);
 	}, function(error) {
 		response.error("Error: " + error.code + " " + error.message);
 	});
