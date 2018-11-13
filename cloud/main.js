@@ -2943,7 +2943,7 @@ Parse.Cloud.define("getDataReport2", function(request, response) {
 			queryObservation.limit(1000);
 			return queryObservation.find();
 		}
-	}.then(function(observations) {
+	}).then(function(observations) {
 		for (var i = 0; i < observations.length; i ++) {
 			var location = undefined;
 			var locationName = undefined;
