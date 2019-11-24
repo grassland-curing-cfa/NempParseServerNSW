@@ -45,7 +45,7 @@ var api = new ParseServer({
   appName: process.env.APP_NAME,
   // The email adapter
   emailAdapter: {
-    module: 'parse-server-simple-mailgun-adapter',
+    module: '@parse/simple-mailgun-adapter',
     options: {
       // The address that your emails come from
       fromAddress: process.env.EMAIL_ADDR_RFS_FBA,
