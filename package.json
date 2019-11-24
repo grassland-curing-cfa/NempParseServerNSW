@@ -12,7 +12,7 @@
     "express": "~4.11.x",
     "kerberos": "~0.0.x",
     "parse": "~1.8.0",
-    "parse-server": "~2.8.4",
+    "parse-server": "~3.9.0",
     "underscore": "~1.8.3",
     "mailgun-js": "^0.7.7",
     "cors": "*",
