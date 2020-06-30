@@ -1334,7 +1334,7 @@ Parse.Cloud.define("getAllSimpleMMRUserRoleForUser", async (request) => {
 		return roleStatsusForUser;
 	} catch (e) {
 		console.log(e);
-		throw new Error("Error: " + e.code + " " + e.message")
+		throw new Error("Error: " + e.code + " " + e.message);
 	}
 });
 
