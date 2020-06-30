@@ -1305,8 +1305,8 @@ Parse.Cloud.define("getAllSimpleMMRUserRoleForUser", async (request) => {
 			  
 		for (var i = 0; i < results.length; i++) {
 
-	        var user = results[i].get("user");
-	        var usrObjId = user.id;
+	        var this_user = results[i].get("user");
+	        var usrObjId = this_user.id;
 	        if (usrObjId == userObjectId) {
 	        	var role = results[i].get("role");
 	            var roleName = role.get("name");
