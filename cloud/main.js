@@ -1770,9 +1770,9 @@ Parse.Cloud.define("getCountOfLocsForDistricts", (request) => {
 			queryLocation.notEqualTo("LocationStatus", "suspended");
 			queryLocation.limit(1000);
 			queryLocation.ascending("LocationName");
-					
-			promises.push(queryLocation.find({
-				success : function(results) {
+			
+			promises.push(queryLocation.find()
+				.then((results)=>{
 					// results are JavaScript Array of GCUR_LOCATION objects
 							
 					var countOfLocations = results.length;
@@ -1786,11 +1786,9 @@ Parse.Cloud.define("getCountOfLocsForDistricts", (request) => {
 					};
 							
 					districtList.push(res);
-				},
-				error : function(error) {
-					return Parse.Promise.error("There was an error in finding GCUR_LOCATION.");
-				}
-			}));
+				}));
+			
+			
 	    });
 	    // Return a new promise that is resolved when all of the promises are resolved
 		console.log("*** promises.length=" + promises.length);
