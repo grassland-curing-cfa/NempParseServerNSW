@@ -1284,25 +1284,26 @@ Parse.Cloud.define("getAllSimpleMMRUserRoleForRole", function(request, response)
   });
 });
 
-Parse.Cloud.define("getAllSimpleMMRUserRoleForUser", function(request, response) {
+Parse.Cloud.define("getAllSimpleMMRUserRoleForUser", async (request) => {
 	var userObjectId = request.params.objectId;
 	var userName = null;
 	
-	var queryUser = new Parse.Query(Parse.User);
-	queryUser.equalTo("objectId", userObjectId);
-	queryUser.first({ useMasterKey: true }).then(function (user) {
-		  userName = user.get("username");
-		  var queryMMR = new Parse.Query("GCUR_MMR_USER_ROLE");
-		  // Include the post data with each comment
-		  queryMMR.include("user");
-		  queryMMR.include("role");
-		  queryMMR.limit(1000);
-		  return queryMMR.find({ useMasterKey: true });
-	}).then(function(results) {
-		  var roleStatsusForUser = null;
-	      var roleStatusList = []
-	      
-	      for (var i = 0; i < results.length; i++) {
+	try {
+	
+		var queryUser = new Parse.Query(Parse.User);
+		queryUser.equalTo("objectId", userObjectId);
+		const user = await queryUser.first({ useMasterKey: true });
+		userName = user.get("username");
+		const queryMMR = new Parse.Query("GCUR_MMR_USER_ROLE");
+		// Include the post data with each comment
+		queryMMR.include("user");
+		queryMMR.include("role");
+		queryMMR.limit(1000);
+		const results = await queryMMR.find({ useMasterKey: true });
+		var roleStatsusForUser = null;
+		var roleStatusList = []
+			  
+		for (var i = 0; i < results.length; i++) {
 
 	        var user = results[i].get("user");
 	        var usrObjId = user.id;
@@ -1324,17 +1325,18 @@ Parse.Cloud.define("getAllSimpleMMRUserRoleForUser", function(request, response)
 
 	            roleStatusList.push(roleStatus);
 	        }
-	      }
-	      roleStatsusForUser = {
-	        "userObjectId": userObjectId,
-	        "userName": userName,
-	        "roleStatusList": roleStatusList
-	      }
-	      response.success(roleStatsusForUser);
-	  }, function(error) {
-		  response.error("Error: " + error.code + " " + error.message);
-	  });
-	});
+		}
+		roleStatsusForUser = {
+				"userObjectId": userObjectId,
+				"userName": userName,
+				"roleStatusList": roleStatusList
+		}
+		return roleStatsusForUser;
+	} catch (e) {
+		console.log(e);
+		throw new Error("Error: " + e.code + " " + e.message")
+	}
+});
 
 Parse.Cloud.define("getSimpleObservationsForUser", function(request, response) {
 	var ALL_DISTRICT = "9999";		// If the districtNo == 9999, return all active locatons.
