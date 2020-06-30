@@ -1761,6 +1761,7 @@ Parse.Cloud.define("getCountOfLocsForDistricts", (request) => {
 			var districtObjId = district.id;
 			var districtNo = district.get("DISTRICT");
 			var districtName = district.get("DIST_NAME");
+			console.log("districtName=" + districtName);
 				
 			var SUSPENDED_STR = "suspended";
 				
@@ -1775,6 +1776,7 @@ Parse.Cloud.define("getCountOfLocsForDistricts", (request) => {
 					// results are JavaScript Array of GCUR_LOCATION objects
 							
 					var countOfLocations = results.length;
+					console("*** countOfLocations=" + countOfLocations);
 
 					res = {
 						"districtObjId" : districtObjId,
@@ -1793,6 +1795,7 @@ Parse.Cloud.define("getCountOfLocsForDistricts", (request) => {
 	    // Return a new promise that is resolved when all of the promises are resolved
 	    return Promise.all(promises);
 	}).then(function() {
+		console.log("*** RETURNING districtList=" + districtList.length);
 	    return districtList;
 	}, function(e) {
 		console.log(e);
