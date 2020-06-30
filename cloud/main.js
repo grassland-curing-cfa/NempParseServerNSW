@@ -1741,7 +1741,7 @@ Parse.Cloud.define("getObsForInputToVISCA", function(request, response) {
 	});
 });
 
-Parse.Cloud.define("getCountOfLocsForDistricts", function(request, response) {
+Parse.Cloud.define("getCountOfLocsForDistricts", (request) => {
 	console.log("Triggering the Cloud Function 'getCountOfLocsForDistricts'");
 	
 	var districtList = [];	// the output array for response
@@ -1793,9 +1793,10 @@ Parse.Cloud.define("getCountOfLocsForDistricts", function(request, response) {
 	    // Return a new promise that is resolved when all of the promises are resolved
 	    return Parse.Promise.when(promises);
 	}).then(function() {
-	    response.success(districtList);
-	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
+	    return districtList;
+	}, function(e) {
+		console.log(e);
+		throw new Error("Error: " + e.code + " " + e.message);
 	});
 });
 
