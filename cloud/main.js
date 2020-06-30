@@ -1793,6 +1793,7 @@ Parse.Cloud.define("getCountOfLocsForDistricts", (request) => {
 			}));
 	    });
 	    // Return a new promise that is resolved when all of the promises are resolved
+		console.log("*** promises.length=" + promises.length);
 	    return Promise.all(promises);
 	}).then(function() {
 		console.log("*** RETURNING districtList=" + districtList.length);
