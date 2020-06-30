@@ -1776,7 +1776,7 @@ Parse.Cloud.define("getCountOfLocsForDistricts", (request) => {
 					// results are JavaScript Array of GCUR_LOCATION objects
 							
 					var countOfLocations = results.length;
-					console("*** countOfLocations=" + countOfLocations);
+					console.log("*** countOfLocations=" + countOfLocations);
 
 					res = {
 						"districtObjId" : districtObjId,
