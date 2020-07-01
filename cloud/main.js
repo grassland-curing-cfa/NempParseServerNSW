@@ -402,11 +402,11 @@ Parse.Cloud.define("exportAllValAdminEmails", function(request, response) {
 Parse.Cloud.define("countOfObservations", (request) => {
 	var query = new Parse.Query("GCUR_OBSERVATION");
 	var countOfObs = 0;
-	return query.count({ useMasterKey: true }).then( (count) => {
-		console.log("*** count="+count);
-		
+	query.count({ useMasterKey: true }).then( (count) => {
+		countOfObs = count;
+		console.log("*** count=" + countOfObs);
+		return countOfObs;
 	});
-
 });
 
 Parse.Cloud.define("isLocationNameExist", function(request, response) {
