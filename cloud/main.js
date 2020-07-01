@@ -399,18 +399,14 @@ Parse.Cloud.define("exportAllValAdminEmails", function(request, response) {
 	});
 });
 
-Parse.Cloud.define("countOfObservations", function(request, response) {
-  var query = new Parse.Query("GCUR_OBSERVATION");
+Parse.Cloud.define("countOfObservations", (request) => {
+	var query = new Parse.Query("GCUR_OBSERVATION");
+	var countOfObs = 0;
+	query.count().then( (count) => {
+		console.log("*** count="+count);
+		return count;
+	});
 
-  query.count({
-    success: function(count) {
-      // The count request succeeded. Show the count
-      response.success(count);
-    },
-    error: function(error) {
-      response.error("OBS lookup failed");
-    }
-  });
 });
 
 Parse.Cloud.define("isLocationNameExist", function(request, response) {
@@ -1772,7 +1768,7 @@ Parse.Cloud.define("getCountOfLocsForDistricts", (request) => {
 			queryLocation.ascending("LocationName");
 			
 			promises.push(queryLocation.find()
-				.then((results)=>{
+				.then((results) => {
 					// results are JavaScript Array of GCUR_LOCATION objects
 							
 					var countOfLocations = results.length;
