@@ -409,6 +409,12 @@ Parse.Cloud.define("countOfObservations", (request) => {
 	});
 });
 
+Parse.Cloud.define("countOfObservations2", async (request) => {
+	const query = new Parse.Query("GCUR_OBSERVATION");
+	const countOfObs = query.count({ useMasterKey: true });
+	return countOfObs;
+});
+
 Parse.Cloud.define("isLocationNameExist", function(request, response) {
 	var query = new Parse.Query("GCUR_LOCATION");
     query.equalTo("LocationName", request.params.locationName);
