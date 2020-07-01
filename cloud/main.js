@@ -1771,7 +1771,7 @@ Parse.Cloud.define("getCountOfLocsForDistricts", (request) => {
 			queryLocation.limit(1000);
 			queryLocation.ascending("LocationName");
 			
-			queryLocation.find()
+			promises.push(queryLocation.find()
 				.then((results)=>{
 					// results are JavaScript Array of GCUR_LOCATION objects
 							
@@ -1786,8 +1786,7 @@ Parse.Cloud.define("getCountOfLocsForDistricts", (request) => {
 					};
 							
 					districtList.push(res);
-					promises.push(Promise.resolve({}));
-				});
+				}));
 			
 			
 	    });
