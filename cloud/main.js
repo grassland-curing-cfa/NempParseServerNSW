@@ -1743,118 +1743,44 @@ Parse.Cloud.define("getObsForInputToVISCA", function(request, response) {
 	});
 });
 
-Parse.Cloud.define("getCountOfLocsForDistricts", async (request) => {
-	console.log("Triggering the Cloud Function 'getCountOfLocsForDistricts'");
+Parse.Cloud.define("getCountOfLocsForDistricts", async (request) => {	
+	const districtList = [];	// the output array for response
 	
-	var districtList = [];	// the output array for response
-	
-	var queryDistrict = new Parse.Query("GCUR_DISTRICT");
+	// Find districts
+	const queryDistrict = new Parse.Query("GCUR_DISTRICT");
 	queryDistrict.ascending("DIST_NAME");
 	queryDistrict.limit(1000);
 	queryDistrict.select("DISTRICT", "DIST_NAME");
-	
 	const districtResults = await queryDistrict.find();
 	
-	var promises = [];
-	
+	// For each district, find count of locations that fall into the district.
 	for (let i = 0; i < districtResults.length; i ++) {
 		const district = districtResults[i];
 		const districtObjId = district.id;
 		const districtNo = district.get("DISTRICT");
 		const districtName = district.get("DIST_NAME");
-		console.log("districtName=" + districtName);
 		
 		const queryLocation = new Parse.Query("GCUR_LOCATION");
 		queryLocation.equalTo("DistrictNo", districtNo);
 		queryLocation.notEqualTo("LocationStatus", "suspended");
 		queryLocation.limit(1000);
 		queryLocation.ascending("LocationName");
-		
 		const locationResults = await queryLocation.find();
-		var countOfLocations = locationResults.length;
-		console.log("*** countOfLocations=" + countOfLocations);
 		
-		var res = {};
-		res = {
-						"districtObjId" : districtObjId,
-						"districtNo" : 	districtNo,
-						"districtName" : districtName,
-						"countOfLocations" : countOfLocations
-					};
+		const countOfLocations = locationResults.length;
+		console.log(districtName + ", countOfLocations=" + countOfLocations);
+		
+		const res = {
+			"districtObjId" : districtObjId,
+			"districtNo" : 	districtNo,
+			"districtName" : districtName,
+			"countOfLocations" : countOfLocations
+		};
 		districtList.push(res);
 	}
 	
 	return districtList;
 });
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	/**
-	
-	queryDistrict.find().then(function(results) {
-		// Create a trivial resolved promise as a base case.
-	    var promises = [];
-	    // each result is a GCUR_DISTRICT row
-	    _.each(results, function(result) {
-	    	var res;
-	    	
-			var district = result;
-			var districtObjId = district.id;
-			var districtNo = district.get("DISTRICT");
-			var districtName = district.get("DIST_NAME");
-			console.log("districtName=" + districtName);
-				
-			var SUSPENDED_STR = "suspended";
-				
-			var queryLocation = new Parse.Query("GCUR_LOCATION");
-			queryLocation.equalTo("DistrictNo", districtNo);
-			queryLocation.notEqualTo("LocationStatus", "suspended");
-			queryLocation.limit(1000);
-			queryLocation.ascending("LocationName");
-			
-			promises.push(queryLocation.find()
-				.then((results) => {
-					// results are JavaScript Array of GCUR_LOCATION objects
-							
-					var countOfLocations = results.length;
-					console.log("*** countOfLocations=" + countOfLocations);
-
-					res = {
-						"districtObjId" : districtObjId,
-						"districtNo" : 	districtNo,
-						"districtName" : districtName,
-						"countOfLocations" : countOfLocations
-					};
-							
-					districtList.push(res);
-				}));
-			
-			
-	    });
-	    // Return a new promise that is resolved when all of the promises are resolved
-		console.log("*** promises.length=" + promises.length);
-	    return Promise.all(promises);
-	}).then(function() {
-		console.log("*** RETURNING districtList=" + districtList.length);
-		console.log(districtList);
-	    return "test";
-	}, function(e) {
-		console.log(e);
-		throw new Error("Error: " + e.code + " " + e.message);
-	});
-});
-**/
 
 Parse.Cloud.define("deleteCurrObservationForLocation", function(request, response) {
 	var locObjectId = request.params.locObjectId;
