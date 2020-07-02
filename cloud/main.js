@@ -402,7 +402,11 @@ Parse.Cloud.define("exportAllValAdminEmails", function(request, response) {
 Parse.Cloud.define("countOfObservations", (request) => {
 	var query = new Parse.Query("GCUR_OBSERVATION");
 	var countOfObs = 0;
-	return query.count({ useMasterKey: true });
+	query.count({ useMasterKey: true }).then( (count) => {
+		countOfObs = count;
+		console.log("*** count=" + countOfObs);
+		return Promise.resolve(countOfObs);
+	});
 });
 
 Parse.Cloud.define("countOfObservations2", async (request) => {
