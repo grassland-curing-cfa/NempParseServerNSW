@@ -44,7 +44,7 @@ var SUPERUSER_OBJECTID = "AucN1rSA60";
  
 // Use Parse.Cloud.define to define as many cloud functions as you want.
 // For example:
-Parse.Cloud.define("hello", (request) =>{
+Parse.Cloud.define("hello", (request) => {
   return "Hello world from " + process.env.APP_NAME;
 });
  
@@ -53,7 +53,7 @@ Parse.Cloud.define("getDateInAEST", function(request, response) {
     return "_IS_DAYLIGHT_SAVING is " + _IS_DAYLIGHT_SAVING + "; Current Date in AEST: '" + currentDateInAEST + "'";
 });
 
-Parse.Cloud.define("testMailgunJS", function(request, response) {
+Parse.Cloud.define("testMailgunJS", async (request) => {
   var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
   
   var data = {
@@ -65,12 +65,7 @@ Parse.Cloud.define("testMailgunJS", function(request, response) {
     html: 'Testing some Mailgun awesomness from <br><h1>' + process.env.SERVER_URL + '</h1>'
   };
   
-  mailgun.messages().send(data, function (error, body) {
-    if (error)
-      response.error("" + error);    
-    else
-      response.success(body);
-  });
+  return mailgun.messages().send(data);
 });
 
 // Parse.com Job for sending Request for Validation email
