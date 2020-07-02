@@ -416,7 +416,8 @@ Parse.Cloud.define("countOfObservations", (request) => {
 
 Parse.Cloud.define("countOfObservations2", async (request) => {
 	const query = new Parse.Query("GCUR_OBSERVATION");
-	const countOfObs = query.count({ useMasterKey: true });
+	const countOfObs = await query.count({ useMasterKey: true });
+	console.log("*** async count=" + countOfObs);
 	return countOfObs;
 });
 
