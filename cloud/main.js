@@ -55,7 +55,6 @@ Parse.Cloud.define("getDateInAEST", function(request, response) {
 
 Parse.Cloud.define("testMailgunJS", async (request) => {
   var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
-  
   var data = {
     from: 'Excited User <me@samples.mailgun.org>',
     to: 'a.chen@cfa.vic.gov.au',
@@ -394,7 +393,7 @@ Parse.Cloud.define("exportAllValAdminEmails", function(request, response) {
 	});
 });
 
-Parse.Cloud.define("countOfObservations", (request) => {
+Parse.Cloud.define("countOfObservations2", (request) => {
 	var query = new Parse.Query("GCUR_OBSERVATION");
 	var countOfObs = 0;
 	query.count({ useMasterKey: true }).then( (count) => {
@@ -409,7 +408,7 @@ Parse.Cloud.define("countOfObservations", (request) => {
 	});
 });
 
-Parse.Cloud.define("countOfObservations2", async (request) => {
+Parse.Cloud.define("countOfObservations", async (request) => {
 	const query = new Parse.Query("GCUR_OBSERVATION");
 	const countOfObs = await query.count({ useMasterKey: true });
 	console.log("*** async count=" + countOfObs);
