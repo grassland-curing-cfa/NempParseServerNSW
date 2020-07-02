@@ -405,7 +405,12 @@ Parse.Cloud.define("countOfObservations", (request) => {
 	query.count({ useMasterKey: true }).then( (count) => {
 		countOfObs = count;
 		console.log("*** count=" + countOfObs);
-		return Promise.resolve(countOfObs);
+		return new Promise(function(resolve, reject) {
+            if (countOfObs >= 0)
+				return resolve(countOfObs);
+			else
+				return reject();
+        })
 	});
 });
 
