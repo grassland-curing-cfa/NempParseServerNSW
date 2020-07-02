@@ -53,7 +53,7 @@ Parse.Cloud.define("getDateInAEST", function(request, response) {
     return "_IS_DAYLIGHT_SAVING is " + _IS_DAYLIGHT_SAVING + "; Current Date in AEST: '" + currentDateInAEST + "'";
 });
 
-Parse.Cloud.define("testMailgunJS", (request) => {
+Parse.Cloud.define("testMailgunJS", async (request) => {
   var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
   
   var data = {
@@ -64,7 +64,8 @@ Parse.Cloud.define("testMailgunJS", (request) => {
     text: '',
     html: 'Testing some Mailgun awesomness from <br><h1>' + process.env.SERVER_URL + '</h1>'
   };
-  return mailgun.messages().send(data);
+  const sentFeedback = await mailgun.messages().send(data);
+  return sentFeedback;
 });
 
 // Parse.com Job for sending Request for Validation email
