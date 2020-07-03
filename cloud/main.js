@@ -1602,7 +1602,7 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 						console.log("FLAG 7");
 					}
 				}
-								
+				console.log("FLAG 8-1");
 				obs = {
 									"locationObjId" : 	locationObjId,
 									"locationName" : locationName,
@@ -1620,6 +1620,7 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 									"userFuelLoad" : userFuelLoad,
 									"validatorFuelLoad" : validatorFuelLoad
 				};
+				onsole.log("FLAG 8-2");	
 				obsList.push(obs);
 				console.log("FLAG 8");
 			}
