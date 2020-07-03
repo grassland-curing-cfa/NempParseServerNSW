@@ -1508,7 +1508,7 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 		queryLocation.limit(1000);
 		const locationResults = await queryLocation.find();
 		
-		for (let i = 0; i < locationResults.length; i ++ {
+		for (let i = 0; i < locationResults.length; i ++) {
 			const location = locationResults[i];
 			
 			const locationObjId = location.id;
