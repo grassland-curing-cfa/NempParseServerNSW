@@ -1513,6 +1513,7 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 			
 			const locationObjId = location.id;
 			const locationName = location.get("LocationName");
+			console("locationName:" + locationName);
 			const locationStatus = location.get("LocationStatus");
 			const locationLat = location.get("Lat");
 			const locationLng = location.get("Lng");
@@ -1547,7 +1548,7 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 				// result length = 0 if there is no observation
 				// result length = 1 if there is either current or previous observation; further checking is required
 				// result length = 2 if there are both current and previous observations
-								
+				console.log("results.length:" + results.length);				
 				if (results.length > 0) {
 					console.log("FLAG 5");
 					// Only previous observation exists for the Location
