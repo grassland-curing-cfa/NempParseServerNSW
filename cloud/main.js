@@ -1426,9 +1426,9 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 						queryObservation.ascending("ObservationStatus");							// this enables fetching current(0) and previous(1) observations in order
 						const results = await queryObservation.find({ useMasterKey: true });		// results are JavaScript Array of GCUR_OBSERVATION objects						
 						
-						const observationObjId, areaCuring, validatorCuring, adminCuring, validated;
-						const prevOpsCuring;
-						const userFuelLoad;
+						var observationObjId, areaCuring, validatorCuring, adminCuring, validated;
+						var prevOpsCuring;
+						var userFuelLoad;
 						
 						// results length = 0 if there is no observation
 						// results length = 1 if there is either current or previous observation; further checking is required
@@ -1539,9 +1539,9 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 				queryObservation.ascending("ObservationStatus");	// this enables fetching current(0) and previous(1) observations
 				const results = await queryObservation.find({ useMasterKey: true });		// results are JavaScript Array of GCUR_OBSERVATION objects	
 								
-				const observationObjId, areaCuring, validatorCuring, adminCuring, validated;
-				const prevOpsCuring;
-				const userFuelLoad, validatorFuelLoad;
+				var observationObjId, areaCuring, validatorCuring, adminCuring, validated;
+				var prevOpsCuring;
+				var userFuelLoad, validatorFuelLoad;
 								
 				// result length = 0 if there is no observation
 				// result length = 1 if there is either current or previous observation; further checking is required
