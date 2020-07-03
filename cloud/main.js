@@ -1406,7 +1406,7 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 				const locationDistrictNo = location.get("DistrictNo");
 				const locationShareable = location.get("Shareable");
 					
-				const obs = {};
+				let obs = {};
 					
 				let isLocInDistrict = false;
 				// If the input districtNo is 9999 which is for all districts
@@ -1520,7 +1520,7 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 			const locationDistrictNo = location.get("DistrictNo");
 			const locationShareable = location.get("Shareable");
 					
-			const obs = {};
+			let obs = {};
 			console.log("FLAG 2");		
 			let isLocInDistrict = false;
 			// If the input districtNo is 9999 which is for all districts
