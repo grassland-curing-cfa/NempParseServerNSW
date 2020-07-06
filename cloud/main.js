@@ -1507,13 +1507,12 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 		queryLocation.ascending("LocationName");
 		queryLocation.limit(1000);
 		const locationResults = await queryLocation.find();
-		console.log("FLAG 1");
+		
 		for (let i = 0; i < locationResults.length; i ++) {
 			const location = locationResults[i];
 			
 			const locationObjId = location.id;
 			const locationName = location.get("LocationName");
-			console.log("locationName:" + locationName);
 			const locationStatus = location.get("LocationStatus");
 			const locationLat = location.get("Lat");
 			const locationLng = location.get("Lng");
@@ -1521,7 +1520,7 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 			const locationShareable = location.get("Shareable");
 					
 			let obs = {};
-			console.log("FLAG 2");		
+					
 			let isLocInDistrict = false;
 			// If the input districtNo is 9999 which is for all districts
 			if (districtNo == ALL_DISTRICT)
@@ -1530,10 +1529,11 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 				isLocInDistrict = true;
 					
 			const SUSPENDED_STR = "suspended";
-			console.log("*** ", locationObjId,  locationName, locationStatus, locationDistrictNo, isLocInDistrict);
+			console.log("--- ", locationObjId,  locationName, locationStatus, locationDistrictNo, isLocInDistrict);
+			
 			// Only find observation record for those locations that are not suspended
 			if( (locationStatus.toLowerCase() != SUSPENDED_STR.toLowerCase()) && isLocInDistrict ) {
-				console.log("FLAG 3");
+				
 		       	const queryObservation = new Parse.Query("GCUR_OBSERVATION");
 				queryObservation.equalTo("Location", location);	// By _Pointer
 				queryObservation.limit(1000);
@@ -1544,13 +1544,13 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 				var observationObjId, areaCuring, validatorCuring, adminCuring, validated;
 				var prevOpsCuring;
 				var userFuelLoad, validatorFuelLoad;
-				console.log("FLAG 4");				
+								
 				// result length = 0 if there is no observation
 				// result length = 1 if there is either current or previous observation; further checking is required
 				// result length = 2 if there are both current and previous observations
-				console.log("results.length:" + results.length);				
+				console.log("* results.length:" + results.length);				
 				if (results.length > 0) {
-					console.log("FLAG 5");
+					
 					// Only previous observation exists for the Location
 					if ((results.length == 1) && (results[0].get("ObservationStatus") == 1)) {
 						// results[0] is GCUR_OBSERVATION for previous observation
@@ -1566,7 +1566,7 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 								prevOpsCuring = results[0].get("AreaCuring");
 							}
 						}
-						console.log("FLAG 6");
+						
 					} else {
 						// current observation exists
 						observationObjId = results[0].id;
@@ -1599,10 +1599,9 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 								}
 							}
 						}
-						console.log("FLAG 7");
 					}
 				}
-				console.log("FLAG 8-1");
+
 				obs = {
 									"locationObjId" : 	locationObjId,
 									"locationName" : locationName,
@@ -1620,9 +1619,9 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 									"userFuelLoad" : userFuelLoad,
 									"validatorFuelLoad" : validatorFuelLoad
 				};
-				console.log("FLAG 8-2");	
+				console.log("*** ", locationName, observationObjId, areaCuring, validatorCuring, adminCuring, prevOpsCuring, validated);
+					
 				obsList.push(obs);
-				console.log("FLAG 8");
 			}
 		}
 	}
