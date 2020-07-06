@@ -13,6 +13,9 @@
               							NEMP-1-151: Remove unnecessary Parse.User.logIn(SUPERUSER, SUPERPASSWORD) and Parse.Cloud.useMasterKey() in the Cloud function
               				11/07/2018: Created two cloud functions: "automateRunModel" & "automateFinaliseData" on the Parse Server for automating RunModel and FinaliseData jobs
 							13/11/2018: Updated the getDataReport function to allow exporting current observations at any point of time
+							30/06/2020: Started to upgrade all Cloud functions to Parse-server 3.
+							06/07/2020: Upgraded getAllSimpleMMRUserRoleForUser, getCountOfLocsForDistricts, getSimpleObservationsForUser
+							07/07/2020: Upgraded getCurrPrevSimpleObservationsForLocation
  */
 
 var _ = require('underscore');
@@ -1913,7 +1916,7 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", async (request) =
 				if (results[0].has("ValidationDate"))
 					currValidationDate = results[0].get("ValidationDate");			
 				if (results[0].has("Validator")) {
-					var validator = results[0].get("Validator");
+					const validator = results[0].get("Validator");
 					currValidatorObjectId = validator.id;
 					currValidatorName = validator.get("username");
 				}
@@ -1926,7 +1929,7 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", async (request) =
 				if (results[0].has("AdminDate"))
 					currAdminDate = results[0].get("AdminDate");			
 				if (results[0].has("Administrator")) {
-					var administrator = results[0].get("Administrator");
+					const administrator = results[0].get("Administrator");
 					currAdminObjectId = administrator.id;
 					currAdminName = administrator.get("username");
 				}
@@ -1994,7 +1997,7 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", async (request) =
 				var prevOpsCuring;
 			 */
 			
-		var currPrevObsDetails = {
+		let currPrevObsDetails = {
 					"currObservationObjectId" : currObservationObjectId,
 					"currObservationDate" : currObservationDate,
 					"currObserverObjectId" : currObserverObjectId,
