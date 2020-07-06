@@ -1777,55 +1777,53 @@ Parse.Cloud.define("deleteCurrObservationForLocation", function(request, respons
 });
 
 // Referenced by the observationDetails.jsp page object when action is "showObservationDetails"
-Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", function(request, response) {
-	var locObjectId = request.params.locObjectId;
-	var locName = null;
+Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", async (request) => {
+	const locObjectId = request.params.locObjectId;
 	
-	var queryLocation = new Parse.Query("GCUR_LOCATION");
+	const queryLocation = new Parse.Query("GCUR_LOCATION");
 	queryLocation.equalTo("objectId", locObjectId);
-	queryLocation.first().then(function(result){
-		var location = result;		
-		locName = location.get("LocationName");
-		locStatus = location.get("LocationStatus");
+	
+	const locResult = await queryLocation.first({ useMasterKey: true });
+
+	const location = locResult;		
+	const locName = location.get("LocationName");
+	const locStatus = location.get("LocationStatus");
 		
-		var queryObservation = new Parse.Query("GCUR_OBSERVATION");
-		queryObservation.equalTo("Location", location);	// By _Pointer
-		queryObservation.include("Observer");
-		queryObservation.include("Validator");
-		queryObservation.include("Administrator");
-		queryObservation.include("Location");
-		queryObservation.include("RateOfDrying");
-		queryObservation.limit(1000);
-		queryObservation.notEqualTo("ObservationStatus", 2);	// excludes the archived observation
-		queryObservation.ascending("ObservationStatus");	// this enables fetching current(0) and previous(1) observations
-		
-		return queryObservation.find({ useMasterKey: true });
-	}, function(error) {
-		response.error("GCUR_LOCATION table lookup failed");
-	}).then(function(results) {
-		// results are JavaScript Array of GCUR_OBSERVATION objects
-		console.log("GCUR_OBSERVATION - find " + results.length + " records for GCUR_LOCATION " + locObjectId);
-		
-		var returnedJSON = {
-				"locationObjId" : 	locObjectId,
-				"locationName" : locName,
-				"locationStatus" : locStatus
-		};
-				
-		if (results.length > 0) {
-			var currObservationObjectId, currObservationDate, currObserverObjectId, currObserverName;
-			var currPointCuring, currPointHeight, currPointCover, currPointFuelLoad, currAreaCuring, currAreaHeight, currAreaCover, currAreaFuelLoad, currRainfall, currRodObjectId, currComment, currUserFuelLoad, currFuelContinuity, currFuelQuantity;
-			var currValidationDate, currValidatorObjectId, currValidatorName, currValidatorCuring, currValidatorFuelLoad;
-			var currAdminDate, currAdminObjectId, currAdminName, currAdminCuring;
-			var prevObservationObjectId, prevPointCuring, prevPointHeight, prevPointCover, prevPointFuelLoad, prevAreaCuring, prevAreaHeight, prevAreaCover, prevAreaFuelLoad, prevRainfall, prevRodObjectId, prevUserFuelLoad, prevFuelContinuity, prevFuelQuantity;
-			var prevOpsCuring;	// in total 35 attributes
+	const queryObservation = new Parse.Query("GCUR_OBSERVATION");
+	queryObservation.equalTo("Location", location);	// By _Pointer
+	queryObservation.include("Observer");
+	queryObservation.include("Validator");
+	queryObservation.include("Administrator");
+	queryObservation.include("Location");
+	queryObservation.include("RateOfDrying");
+	queryObservation.limit(1000);
+	queryObservation.notEqualTo("ObservationStatus", 2);	// excludes the archived observation
+	queryObservation.ascending("ObservationStatus");	// this enables fetching current(0) and previous(1) observations
+	
+	const results = await queryObservation.find({ useMasterKey: true });
+	// results are JavaScript Array of GCUR_OBSERVATION objects
+	console.log("GCUR_OBSERVATION - find " + results.length + " records for GCUR_LOCATION " + locObjectId + ", " + locName);
+	
+	let returnedJSON = {
+		"locationObjId" : locObjectId,
+		"locationName" : locName,
+		"locationStatus" : locStatus
+	};
+	
+	if (results.length > 0) {
+		let currObservationObjectId, currObservationDate, currObserverObjectId, currObserverName;
+		let currPointCuring, currPointHeight, currPointCover, currPointFuelLoad, currAreaCuring, currAreaHeight, currAreaCover, currAreaFuelLoad, currRainfall, currRodObjectId, currComment, currUserFuelLoad, currFuelContinuity, currFuelQuantity;
+		let currValidationDate, currValidatorObjectId, currValidatorName, currValidatorCuring, currValidatorFuelLoad;
+		let currAdminDate, currAdminObjectId, currAdminName, currAdminCuring;
+		let prevObservationObjectId, prevPointCuring, prevPointHeight, prevPointCover, prevPointFuelLoad, prevAreaCuring, prevAreaHeight, prevAreaCover, prevAreaFuelLoad, prevRainfall, prevRodObjectId, prevUserFuelLoad, prevFuelContinuity, prevFuelQuantity;
+		let prevOpsCuring;	// in total 35 attributes
 			
-			// Only previous observation exists for the Location
-			if ((results.length == 1) && (results[0].get("ObservationStatus") == 1)) {
+		// Only previous observation exists for the Location
+		if ((results.length == 1) && (results[0].get("ObservationStatus") == 1)) {
 				// results[0] is GCUR_OBSERVATION for previous observation
 				
 				// check if FinalisedDate is 30 days away
-				var isPrevObsTooOld = isObsTooOld(results[0].get("FinalisedDate"));
+				let isPrevObsTooOld = isObsTooOld(results[0].get("FinalisedDate"));
 				if (!isPrevObsTooOld) {
 					prevObservationObjectId = results[0].id;
 					if (results[0].has("PointCuring"))
@@ -1853,7 +1851,7 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", function(request,
 					if (results[0].has("Rainfall"))
 						prevRainfall = results[0].get("Rainfall");
 					if (results[0].has("RateOfDrying")) {
-						var prevRateOfDrying = results[0].get("RateOfDrying");
+						const prevRateOfDrying = results[0].get("RateOfDrying");
 						prevRodObjectId = prevRateOfDrying.id;
 					}
 					
@@ -1868,16 +1866,14 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", function(request,
 					}
 					*/
 				}
-			} else {			
-				// current observation exists
-				
+		} else {// current observation exists
 				// Observer's current observation details
 				currObservationObjectId = results[0].id;
 				if (results[0].has("ObservationDate")) {
 					currObservationDate = results[0].get("ObservationDate");
 				}
 				if (results[0].has("Observer")) {
-					var observer = results[0].get("Observer");
+					const observer = results[0].get("Observer");
 					currObserverObjectId = observer.id;
 					//currObserverName = observer.get("username");
 					currObserverName = observer.get("firstName") + " " + observer.get("lastName");
@@ -1907,7 +1903,7 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", function(request,
 				if (results[0].has("Rainfall"))
 					currRainfall = results[0].get("Rainfall");
 				if (results[0].has("RateOfDrying")) {
-					var currRateOfDrying = results[0].get("RateOfDrying");
+					const currRateOfDrying = results[0].get("RateOfDrying");
 					currRodObjectId = currRateOfDrying.id;
 				}
 				if (results[0].has("Comments"))
@@ -1942,7 +1938,7 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", function(request,
 					// results[1] is GCUR_OBSERVATION for previous observation
 					
 					// check if FinalisedDate is 30 days away
-					var isPrevObsTooOld = isObsTooOld(results[1].get("FinalisedDate"));
+					const isPrevObsTooOld = isObsTooOld(results[1].get("FinalisedDate"));
 					if (!isPrevObsTooOld) {
 						prevObservationObjectId = results[1].id;
 						if (results[1].has("PointCuring"))
@@ -1970,7 +1966,7 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", function(request,
 						if (results[1].has("Rainfall"))
 							prevRainfall = results[1].get("Rainfall");
 						if (results[1].has("RateOfDrying")) {
-							var prevRateOfDrying = results[1].get("RateOfDrying");
+							const prevRateOfDrying = results[1].get("RateOfDrying");
 							prevRodObjectId = prevRateOfDrying.id;
 						}
 						
@@ -1986,7 +1982,7 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", function(request,
 						*/
 					}
 				}
-			}
+		}
 			
 			// add additional observation attributes
 			/**
@@ -1998,7 +1994,7 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", function(request,
 				var prevOpsCuring;
 			 */
 			
-			var currPrevObsDetails = {
+		var currPrevObsDetails = {
 					"currObservationObjectId" : currObservationObjectId,
 					"currObservationDate" : currObservationDate,
 					"currObserverObjectId" : currObserverObjectId,
@@ -2041,15 +2037,12 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", function(request,
 					"prevRainfall" : prevRainfall,
 					"prevRodObjectId" : prevRodObjectId,
 					"prevOpsCuring" : prevOpsCuring
-			};
+		};
 						
-			returnedJSON["currPrevObsDetails"] = currPrevObsDetails;			
-		}
-		
-		response.success(returnedJSON);
-	}, function(error) {
-		response.error("GCUR_OBSERVATION table lookup failed");
-	});	 
+		returnedJSON["currPrevObsDetails"] = currPrevObsDetails;			
+	}
+
+	return returnedJSON;
 });
 
 Parse.Cloud.define("getAllFuelLoadLookupItems", function(request, response) {
