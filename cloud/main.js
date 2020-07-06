@@ -1548,7 +1548,6 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 				// result length = 0 if there is no observation
 				// result length = 1 if there is either current or previous observation; further checking is required
 				// result length = 2 if there are both current and previous observations
-				console.log("* results.length:" + results.length);				
 				if (results.length > 0) {
 					
 					// Only previous observation exists for the Location
