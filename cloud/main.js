@@ -1529,7 +1529,7 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 				isLocInDistrict = true;
 					
 			const SUSPENDED_STR = "suspended";
-			console.log("--- ", locationObjId,  locationName, locationStatus, locationDistrictNo, isLocInDistrict);
+			//console.log("--- ", locationObjId,  locationName, locationStatus, locationDistrictNo, isLocInDistrict);
 			
 			// Only find observation record for those locations that are not suspended
 			if( (locationStatus.toLowerCase() != SUSPENDED_STR.toLowerCase()) && isLocInDistrict ) {
