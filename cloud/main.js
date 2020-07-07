@@ -544,7 +544,7 @@ Parse.Cloud.afterSave("GCUR_LOCATION", function(request, response) {
 /**
  * Retrieve shared infos for shared locations for State
  */
-Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", async(request)=>  {
+Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", async (request) => {
 	const stateName = request.params.state;
 	
 	let isBufferZonePntsForStateApplied = true;
@@ -2012,26 +2012,21 @@ Parse.Cloud.define("getAllFuelLoadLookupItems", function(request, response) {
 	});
 });
 
-Parse.Cloud.define("getAllAdjByLocDists", function(request, response) {
-	var query = new Parse.Query("GCUR_ADJUST_LOCATION_LOOKUP_DIST");
+Parse.Cloud.define("getAllAdjByLocDists", async (request) => {
+	const query = new Parse.Query("GCUR_ADJUST_LOCATION_LOOKUP_DIST");
 	query.limit(1000);
 	query.ascending("distance");
-	var returnedJSON = [];
-	
-	query.find().then(function(results) {
-		for (var i = 0; i < results.length; i++) {
-			//console.log(results[i].get("height") + " -" + results[i].get("cover") + " - " + results[i].get("fuel_load"));
-			var dist = {
-					"d" : results[i].get("distance")
-			};
-			
-			returnedJSON.push(dist);
-		}
-
-		response.success(returnedJSON);
-	}, function(error) {
-	      response.error("GCUR_ADJUST_LOCATION_LOOKUP_DIST lookup failed");
-	});
+	let returnedJSON = [];
+	const results = await query.find();
+	for (let i = 0; i < results.length; i++) {
+		//console.log(results[i].get("height") + " -" + results[i].get("cover") + " - " + results[i].get("fuel_load"));
+		let dist = {
+			"d" : results[i].get("distance")
+		};
+		
+		returnedJSON.push(dist);
+	}
+	return returnedJSON;
 });
 
 Parse.Cloud.define("getAllLocationsWithLinkedStatusForObservers", function(request, response) {
