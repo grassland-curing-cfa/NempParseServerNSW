@@ -2016,11 +2016,11 @@ Parse.Cloud.define("getAllAdjByLocDists", async (request) => {
 	const query = new Parse.Query("GCUR_ADJUST_LOCATION_LOOKUP_DIST");
 	query.limit(1000);
 	query.ascending("distance");
-	let returnedJSON = [];
+	const returnedJSON = [];
 	const results = await query.find();
 	for (let i = 0; i < results.length; i++) {
 		//console.log(results[i].get("height") + " -" + results[i].get("cover") + " - " + results[i].get("fuel_load"));
-		let dist = {
+		const dist = {
 			"d" : results[i].get("distance")
 		};
 		
