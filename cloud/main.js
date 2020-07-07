@@ -450,6 +450,7 @@ Parse.Cloud.define("deleteUserByUsername", function(request, response) {
  * Populate all ShareBy{STATE} columns available by "True" beforeSave a new Observation is added
  */
 Parse.Cloud.beforeSave("GCUR_OBSERVATION", async (request) => {
+	console.log("*** beforeSave triggered - START");
 	const objId = request.object.id;
 	const loc = request.object.get("Location");
 	
@@ -509,6 +510,7 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", async (request) => {
  * after a new Observation is added
  */
 Parse.Cloud.afterSave("GCUR_OBSERVATION", async (request) => {
+	console.log("*** afterSave triggered - START");
 	var objId = request.object.id;
 	var loc = request.object.get("Location");
 	var locObjId = loc.id;
@@ -542,191 +544,180 @@ Parse.Cloud.afterSave("GCUR_LOCATION", function(request, response) {
 /**
  * Retrieve shared infos for shared locations for State
  */
-Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, response) {
-	var stateName = request.params.state;
+Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", async(request)=>  {
+	const stateName = request.params.state;
 	
-	var isBufferZonePntsForStateApplied = true;
-	var bufferZonePntsForState = null;
+	let isBufferZonePntsForStateApplied = true;
+	let bufferZonePntsForState = null;
 	
-	var sharedInfos = [];
+	let sharedInfos = [];
 	
-	var querySharedJurisSettings = new Parse.Query("GCUR_SHARED_JURIS_SETTINGS");
+	const querySharedJurisSettings = new Parse.Query("GCUR_SHARED_JURIS_SETTINGS");
 	querySharedJurisSettings.equalTo("Jurisdiction", stateName);		// Find the record for the input jurisdiction
 
 	// Find the "bufferZonePnts" for the input jurisdiction
 	// "bufferZonePnts" can be either the set point array, or "null" or "undefined" as well.
-	querySharedJurisSettings.first().then(function(jurisSetting) {
-		bufferZonePntsForState = jurisSetting.get("bufferZonePnts");
-			
-		if ((bufferZonePntsForState == null) || (bufferZonePntsForState == undefined))
-			isBufferZonePntsForStateApplied = false;
-			
-		return Parse.Promise.as("'bufferZonePnts' is found for jurisdiction " + stateName);
-	}, function(error) {
-		console.log("There was an error in finding Class 'GCUR_SHARED_JURIS_SETTINGS', but we continue to find previous observations.");
-		return Parse.Promise.as("There was an error in finding Class 'GCUR_SHARED_JURIS_SETTINGS', but we continue to find previous observations.");
-	}).then(function() {
-		console.log("isBufferZonePntsForStateApplied = " + isBufferZonePntsForStateApplied + " for " + stateName);
+	const jurisSetting = await querySharedJurisSettings.first();
+	bufferZonePntsForState = jurisSetting.get("bufferZonePnts");
+
+	if ((bufferZonePntsForState == null) || (bufferZonePntsForState == undefined))
+		isBufferZonePntsForStateApplied = false;
+
+	console.log("isBufferZonePntsForStateApplied = " + isBufferZonePntsForStateApplied + " for " + stateName);
 		
-		var queryObservation = new Parse.Query("GCUR_OBSERVATION");
-		queryObservation.include("Location");
-		queryObservation.equalTo("ObservationStatus", 1);			// Previous week's observations
-		queryObservation.limit(1000);
-		
-		return queryObservation.find(); 
-	}).then(function(obs) {
-		for (var j = 0; j < obs.length; j ++) {
-			// check if FinalisedDate is 30 days away
-			var isPrevObsTooOld = isObsTooOld(obs[j].get("FinalisedDate"));
-			if (!isPrevObsTooOld) {
-				var loc = obs[j].get("Location");
-				var isShareable = loc.get("Shareable");
-				var locStatus = loc.get("LocationStatus");
+	const queryObservation = new Parse.Query("GCUR_OBSERVATION");
+	queryObservation.include("Location");
+	queryObservation.equalTo("ObservationStatus", 1);			// Previous week's observations
+	queryObservation.limit(1000);
+	const obs = await queryObservation.find();
+
+	for (let j = 0; j < obs.length; j ++) {
+		// check if FinalisedDate is 30 days away
+		let isPrevObsTooOld = isObsTooOld(obs[j].get("FinalisedDate"));
+		if (!isPrevObsTooOld) {
+			const loc = obs[j].get("Location");
+			const isShareable = loc.get("Shareable");
+			const locStatus = loc.get("LocationStatus");
+			
+			// We only retrieve obs curing for locations that are shareable
+			if ( isShareable && (locStatus.toLowerCase() != "suspended") ) {
+				const locObjId = loc.id;
+				const locName = loc.get("LocationName");
+				const distNo = loc.get("DistrictNo");
+				const locLat = loc.get("Lat");
+				const locLng = loc.get("Lng");
 				
-				// We only retrieve obs curing for locations that are shareable
-				if ( isShareable && (locStatus.toLowerCase() != "suspended") ) {
-					var locObjId = loc.id;
-					var locName = loc.get("LocationName");
-					var distNo = loc.get("DistrictNo");
-					var locLat = loc.get("Lat");
-					var locLng = loc.get("Lng");
+				const obsObjId = obs[j].id;
+				
+				let prevOpsCuring = prevOpsDate = undefined;		// Either can be undefined.
+				
+				if (obs[j].has("AdminCuring")) {
+					prevOpsCuring = obs[j].get("AdminCuring");
+				} else if (obs[j].has("ValidatorCuring")) {
+					prevOpsCuring = obs[j].get("ValidatorCuring");
+				} else if (obs[j].has("AreaCuring")) {
+					prevOpsCuring = obs[j].get("AreaCuring");
+				}
+				
+				if (obs[j].has("AdminDate")) {
+					prevOpsDate = obs[j].get("AdminDate");
+				} else if (obs[j].has("ValidationDate")) {
+					prevOpsDate = obs[j].get("ValidationDate");
+				} else if (obs[j].has("ObservationDate")) {
+					prevOpsDate = obs[j].get("ObservationDate");
+				}
+				
+				if (prevOpsCuring == undefined) {
+					console.log(locName + " [" + locObjId + "] has no prevOpsCuring, so will not proceed to the further process.");
+				}
+
+				const finalisedDate = obs[j].get("FinalisedDate");
+				
+				// In Array; convert raw string to JSON Array
+				// For example, "[{"st":"VIC","sh":false},{"st":"QLD","sh":true},{"st":"NSW","sh":true}]"
+				if (obs[j].has("SharedBy") && (prevOpsCuring != undefined)) {
+					const sharedByInfo = JSON.parse(obs[j].get("SharedBy"));
 					
-					var obsObjId = obs[j].id;
-					
-					var prevOpsCuring = prevOpsDate = undefined;		// Either can be undefined.
-					
-					if (obs[j].has("AdminCuring")) {
-						prevOpsCuring = obs[j].get("AdminCuring");
-					} else if (obs[j].has("ValidatorCuring")) {
-						prevOpsCuring = obs[j].get("ValidatorCuring");
-					} else if (obs[j].has("AreaCuring")) {
-						prevOpsCuring = obs[j].get("AreaCuring");
-					}
-					
-					if (obs[j].has("AdminDate")) {
-						prevOpsDate = obs[j].get("AdminDate");
-					} else if (obs[j].has("ValidationDate")) {
-						prevOpsDate = obs[j].get("ValidationDate");
-					} else if (obs[j].has("ObservationDate")) {
-						prevOpsDate = obs[j].get("ObservationDate");
-					}
-					
-					if (prevOpsCuring == undefined) {
-						console.log(locName + " [" + locObjId + "] has no prevOpsCuring, so will not proceed to the further process.");
-					}
-	
-					var finalisedDate = obs[j].get("FinalisedDate");
-					
-					// In Array; convert raw string to JSON Array
-					// For example, "[{"st":"VIC","sh":false},{"st":"QLD","sh":true},{"st":"NSW","sh":true}]"
-					if (obs[j].has("SharedBy") && (prevOpsCuring != undefined)) {
-						var sharedByInfo = JSON.parse(obs[j].get("SharedBy"));
-						
-						var isSharedByState;
-						
-						for (var p = 0; p < sharedByInfo.length; p ++) {
-							if (sharedByInfo[p]["st"] == stateName) {
-								isSharedByState = sharedByInfo[p]["sh"];
-								
-								var returnedItem = {
-									"obsObjId" : obsObjId,
-									"locObjId"	: locObjId,
-									"locName" : locName,
-									"locStatus" : locStatus,
-									"distNo" : distNo,
-									"isSharedByState" : isSharedByState,
-									"prevOpsCuring" : prevOpsCuring,
-									"prevOpsDate" : prevOpsDate,
-									"lat" : locLat,
-									"lng" : locLng,
-									"finalisedDate" : finalisedDate
-								};
-								
-								sharedInfos.push(returnedItem);
-								break;
-							}
+					for (let p = 0; p < sharedByInfo.length; p ++) {
+						if (sharedByInfo[p]["st"] == stateName) {
+							const isSharedByState = sharedByInfo[p]["sh"];
+							
+							let returnedItem = {
+								"obsObjId" : obsObjId,
+								"locObjId"	: locObjId,
+								"locName" : locName,
+								"locStatus" : locStatus,
+								"distNo" : distNo,
+								"isSharedByState" : isSharedByState,
+								"prevOpsCuring" : prevOpsCuring,
+								"prevOpsDate" : prevOpsDate,
+								"lat" : locLat,
+								"lng" : locLng,
+								"finalisedDate" : finalisedDate
+							};
+							
+							sharedInfos.push(returnedItem);
+							break;
 						}
 					}
 				}
 			}
 		}
-		
-		var returnedObj = {
-			"state" : stateName,
-			"sharedInfos" : sharedInfos
+	}
+	
+	let returnedObj = {
+		"state" : stateName,
+		"sharedInfos" : sharedInfos
+	};
+	
+	// If isBufferZonePntsForStateApplied is false OR sharedInfos contains zero element
+	if ((isBufferZonePntsForStateApplied == false) || (sharedInfos.length < 1)) {
+		console.log("Not to apply buffer zone for " + stateName + " OR sharedInfos contains zero element.");
+	}
+	// apply Turf package for buffering
+	else {
+		let searchWithin = {
+				"type": "FeatureCollection",
+				"features": [
+				  {
+					  "type": "Feature",
+					  "properties": {},
+					  "geometry": {
+						"type": "Polygon",
+						"coordinates": new Array()
+					  }
+				  }
+				]
 		};
 		
-		// If isBufferZonePntsForStateApplied is false OR sharedInfos contains zero element
-		if ((isBufferZonePntsForStateApplied == false) || (sharedInfos.length < 1)) {
-			console.log("Not to apply buffer zone for " + stateName + " OR sharedInfos contains zero element.");
-		}
-		// apply Turf package for buffering
-		else {
-			var searchWithin = {
-					"type": "FeatureCollection",
-					"features": [
-				      {
-				    	  "type": "Feature",
-				    	  "properties": {},
-				    	  "geometry": {
-					        "type": "Polygon",
-					        "coordinates": new Array()
-					      }
-				      }
-				    ]
-			};
-			
-			bufferZonePntsForState = JSON.parse(bufferZonePntsForState);
-			searchWithin["features"][0]["geometry"]["coordinates"].push(bufferZonePntsForState);
+		bufferZonePntsForState = JSON.parse(bufferZonePntsForState);
+		searchWithin["features"][0]["geometry"]["coordinates"].push(bufferZonePntsForState);
 
-			var pointsToCheck = {
-					"type": "FeatureCollection",
-					"features": []
-			};
+		let pointsToCheck = {
+				"type": "FeatureCollection",
+				"features": []
+		};
+		
+		for (let j = 0; j < sharedInfos.length; j++) {
+			const obsObjId = sharedInfos[j]["obsObjId"];
+			const lat = sharedInfos[j]["lat"];
+			const lng = sharedInfos[j]["lng"];
 			
-			for (var j = 0; j < sharedInfos.length; j++) {
-				var obsObjId = sharedInfos[j]["obsObjId"];
-				var lat = sharedInfos[j]["lat"];
-				var lng = sharedInfos[j]["lng"];
-				
-				var featureObj = {
-						"type": "Feature",
-					    "properties": {"obsObjId" : obsObjId},
-					    "geometry": {
-					    	"type": "Point",
-					    	"coordinates": [lng, lat]
-					    }
-				};
-				
-				pointsToCheck["features"].push(featureObj);
-			}
-			
-			// Use Turf to retrieve points that are within the buffer zone
-			var ptsWithin = turf.within(pointsToCheck, searchWithin);
-			
-			var sharedInfosFiltered = [];
-			
-			console.log("Out of a total of " + sharedInfos.length + " observations, " + ptsWithin["features"].length + " are within the buffer zone of " + stateName);
-			
-			for (var m = 0; m < ptsWithin["features"].length; m++) {
-				for (var n = 0; n < sharedInfos.length; n++) {
-					if (ptsWithin["features"][m]["properties"]["obsObjId"] == sharedInfos[n]["obsObjId"]) {
-						sharedInfosFiltered.push(sharedInfos[n]);
-						break;
+			let featureObj = {
+					"type": "Feature",
+					"properties": {"obsObjId" : obsObjId},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [lng, lat]
 					}
-				}
-			}
-			
-			returnedObj = {
-				"state" : stateName,
-				"sharedInfos" : sharedInfosFiltered
 			};
+			
+			pointsToCheck["features"].push(featureObj);
 		}
 		
-		return response.success(returnedObj);
-	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
-	});
+		// Use Turf to retrieve points that are within the buffer zone
+		const ptsWithin = turf.within(pointsToCheck, searchWithin);
+		
+		let sharedInfosFiltered = [];
+		
+		console.log("Out of a total of " + sharedInfos.length + " observations, " + ptsWithin["features"].length + " are within the buffer zone of " + stateName);
+		
+		for (let m = 0; m < ptsWithin["features"].length; m++) {
+			for (let n = 0; n < sharedInfos.length; n++) {
+				if (ptsWithin["features"][m]["properties"]["obsObjId"] == sharedInfos[n]["obsObjId"]) {
+					sharedInfosFiltered.push(sharedInfos[n]);
+					break;
+				}
+			}
+		}
+		
+		returnedObj = {
+			"state" : stateName,
+			"sharedInfos" : sharedInfosFiltered
+		};
+	}
+	
+	return returnedObj;
 });
 
 /**
