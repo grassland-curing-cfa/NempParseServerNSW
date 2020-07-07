@@ -15,7 +15,7 @@
 							13/11/2018: Updated the getDataReport function to allow exporting current observations at any point of time
 							30/06/2020: Started to upgrade all Cloud functions to Parse-server 3.
 							06/07/2020: Upgraded getAllSimpleMMRUserRoleForUser, getCountOfLocsForDistricts, getSimpleObservationsForUser
-							07/07/2020: Upgraded getCurrPrevSimpleObservationsForLocation
+							07/07/2020: Upgraded getCurrPrevSimpleObservationsForLocation, 
  */
 
 var _ = require('underscore');
@@ -397,18 +397,10 @@ Parse.Cloud.define("exportAllValAdminEmails", function(request, response) {
 });
 
 Parse.Cloud.define("countOfObservations2", (request) => {
-	var query = new Parse.Query("GCUR_OBSERVATION");
-	var countOfObs = 0;
-	query.count({ useMasterKey: true }).then( (count) => {
-		countOfObs = count;
-		console.log("*** count=" + countOfObs);
-		return new Promise(function(resolve, reject) {
-            if (countOfObs >= 0)
-				return resolve(countOfObs);
-			else
-				return reject();
-        })
-	});
+	const query = new Parse.Query("GCUR_OBSERVATION");
+    const count = query.count({ useMasterKey: true });
+    console.log("*** count=" + count);
+    return {"count": count};
 });
 
 Parse.Cloud.define("countOfObservations", async (request) => {
