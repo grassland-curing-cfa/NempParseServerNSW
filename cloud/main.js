@@ -1221,7 +1221,7 @@ Parse.Cloud.define("getAllSimpleMMRUserRoleForRole", async (request) => {
         "roleName": roleName,
         "userStatusList": userStatusList
       }
-	  response.success(userStatsusForRole);
+	 return userStatsusForRole;
 });
 
 Parse.Cloud.define("getAllSimpleMMRUserRoleForUser", async (request) => {
