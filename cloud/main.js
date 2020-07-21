@@ -13,9 +13,6 @@
               							NEMP-1-151: Remove unnecessary Parse.User.logIn(SUPERUSER, SUPERPASSWORD) and Parse.Cloud.useMasterKey() in the Cloud function
               				11/07/2018: Created two cloud functions: "automateRunModel" & "automateFinaliseData" on the Parse Server for automating RunModel and FinaliseData jobs
 							13/11/2018: Updated the getDataReport function to allow exporting current observations at any point of time
-							30/06/2020: Started to upgrade all Cloud functions to Parse-server 3.
-							06/07/2020: Upgraded getAllSimpleMMRUserRoleForUser, getCountOfLocsForDistricts, getSimpleObservationsForUser
-							07/07/2020: Upgraded getCurrPrevSimpleObservationsForLocation, 
  */
 
 var _ = require('underscore');
@@ -47,17 +44,18 @@ var SUPERUSER_OBJECTID = "AucN1rSA60";
  
 // Use Parse.Cloud.define to define as many cloud functions as you want.
 // For example:
-Parse.Cloud.define("hello", (request) => {
-  return "Hello world from " + process.env.APP_NAME;
+Parse.Cloud.define("hello", function(request, response) {
+  response.success("Hello world from " + process.env.APP_NAME);
 });
  
 Parse.Cloud.define("getDateInAEST", function(request, response) {
     var currentDateInAEST = getTodayString(_IS_DAYLIGHT_SAVING);
-    return "_IS_DAYLIGHT_SAVING is " + _IS_DAYLIGHT_SAVING + "; Current Date in AEST: '" + currentDateInAEST + "'";
+    response.success("_IS_DAYLIGHT_SAVING is " + _IS_DAYLIGHT_SAVING + "; Current Date in AEST: '" + currentDateInAEST + "'");
 });
 
-Parse.Cloud.define("testMailgunJS", async (request) => {
+Parse.Cloud.define("testMailgunJS", function(request, response) {
   var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
+  
   var data = {
     from: 'Excited User <me@samples.mailgun.org>',
     to: 'a.chen@cfa.vic.gov.au',
@@ -66,8 +64,13 @@ Parse.Cloud.define("testMailgunJS", async (request) => {
     text: '',
     html: 'Testing some Mailgun awesomness from <br><h1>' + process.env.SERVER_URL + '</h1>'
   };
-  const sentFeedback = await mailgun.messages().send(data);
-  return sentFeedback;
+  
+  mailgun.messages().send(data, function (error, body) {
+    if (error)
+      response.error("" + error);    
+    else
+      response.success(body);
+  });
 });
 
 // Parse.com Job for sending Request for Validation email
@@ -396,18 +399,18 @@ Parse.Cloud.define("exportAllValAdminEmails", function(request, response) {
 	});
 });
 
-Parse.Cloud.define("countOfObservations2", (request) => {
-	const query = new Parse.Query("GCUR_OBSERVATION");
-    const count = query.count({ useMasterKey: true });
-    console.log("*** count=" + count);
-    return {"count": count};
-});
+Parse.Cloud.define("countOfObservations", function(request, response) {
+  var query = new Parse.Query("GCUR_OBSERVATION");
 
-Parse.Cloud.define("countOfObservations", async (request) => {
-	const query = new Parse.Query("GCUR_OBSERVATION");
-	const countOfObs = await query.count({ useMasterKey: true });
-	console.log("*** async count=" + countOfObs);
-	return countOfObs;
+  query.count({
+    success: function(count) {
+      // The count request succeeded. Show the count
+      response.success(count);
+    },
+    error: function(error) {
+      response.error("OBS lookup failed");
+    }
+  });
 });
 
 Parse.Cloud.define("isLocationNameExist", function(request, response) {
@@ -449,13 +452,12 @@ Parse.Cloud.define("deleteUserByUsername", function(request, response) {
 /**
  * Populate all ShareBy{STATE} columns available by "True" beforeSave a new Observation is added
  */
-Parse.Cloud.beforeSave("GCUR_OBSERVATION", async (request) => {
-	console.log("*** beforeSave triggered - START");
-	const objId = request.object.id;
-	const loc = request.object.get("Location");
+Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
+	var objId = request.object.id;
+	var loc = request.object.get("Location");
 	
 	if (loc != undefined) {
-		let locObjId = loc.id;
+		var locObjId = loc.id;
 		console.log("*** beforeSave triggered on GCUR_OBSERVATION for GCUR_LOCATION: " + locObjId);
 	}
 	
@@ -463,45 +465,72 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", async (request) => {
 		console.log("*** beforeSave requested by _User: " + request.user.id);
 	}
 	
-	let newAreaCuring = newValidatorCuring = newAdminCuring = newValidatorFuelLoad = undefined;
+	var newAreaCuring = newValidatorCuring = newAdminCuring = newValidatorFuelLoad = undefined;
 	newAreaCuring = request.object.get("AreaCuring");
 	newValidatorCuring = request.object.get("ValidatorCuring");
 	newAdminCuring = request.object.get("AdminCuring");
 	newValidatorFuelLoad = request.object.get("ValidatorFuelLoad");
 				
-	console.log("*** beforeSave: AreaCuring[ " + newAreaCuring + "], ValidatorCuring[" + newValidatorCuring + "], AdminCuring[" + newAdminCuring + "], ValidatorFuelLoad[" + newValidatorFuelLoad + "]");
+	console.log("* AreaCuring[ " + newAreaCuring + "], ValidatorCuring[" + newValidatorCuring + "], AdminCuring[" + newAdminCuring + "], ValidatorFuelLoad[" + newValidatorFuelLoad + "]");
 	
-	let sharedWithJurisArr = [];
-	
-	// Adding a new GCUR_OBSERVATION object
+	var sharedWithJurisArr = [];
+		
 	if(request.object.isNew()) {
-		console.log("*** beforeSave: Adding a new Observation.");
-		const sharedJurisSettingsQ = new Parse.Query("GCUR_SHARED_JURIS_SETTINGS");
-		const sjsObjs = await sharedJurisSettingsQ.find();
-		for (let i = 0; i < sjsObjs.length; i ++) {
-			var jurisdiction = sjsObjs[i].get("Jurisdiction");
-			sharedWithJurisArr.push(jurisdiction);
-		}
-
-		let sharedByArr = [];
+		// Adding a new GCUR_OBSERVATION object
+		console.log("Adding a new Observation.");
+		var sharedJurisSettingsQ = new Parse.Query("GCUR_SHARED_JURIS_SETTINGS");
+		
+		sharedJurisSettingsQ.find().then(function(sjsObjs) {
+			for (var i = 0; i < sjsObjs.length; i ++) {
+				var jurisdiction = sjsObjs[i].get("Jurisdiction");
+				sharedWithJurisArr.push(jurisdiction);
+			}
 			
-		for (let i = 0; i < sharedWithJurisArr.length; i ++) {
-			sharedByArr.push({
-				"st" : sharedWithJurisArr[i],
-				"sh" : true
-			});
-		}
+			var sharedByArr = [];
 			
-		request.object.set("SharedBy", JSON.stringify(sharedByArr));
-	}
-	// Updating an existing GCUR_OBSERVATION object
-	else {
-		console.log("*** beforeSave: Updating an existing Observation. GCUR_OBSERVATION objectId = " + objId);
+			for (var i = 0; i < sharedWithJurisArr.length; i ++) {
+				sharedByArr.push({
+					"st" : sharedWithJurisArr[i],
+					"sh" : true
+				});
+			}
+			
+			request.object.set("SharedBy", JSON.stringify(sharedByArr));
+			
+			response.success();
+		});
+	} else {
+		// Updating an existing GCUR_OBSERVATION object
+		console.log("*** Updating an existing Observation. GCUR_OBSERVATION objectId = " + objId);
+		
 		if ( (newAreaCuring == undefined) && (newValidatorCuring == undefined) && (newAdminCuring == undefined) && (newValidatorFuelLoad == undefined) ) {
-			const queryObservation = new Parse.Query("GCUR_OBSERVATION");
+			var queryObservation = new Parse.Query("GCUR_OBSERVATION");
 			queryObservation.equalTo("objectId", objId);
-			const object = await queryObservation.first();
-			await object.destroy();
+			queryObservation.first({
+				success: function(object) {
+					// Delete this object
+					object.destroy({
+						success: function(myObject) {
+							// The object was deleted from the Parse Cloud.
+							console.log("*** Observation Object has been successfully deleted as there was no curing values or validator's fuel load value. ");
+							response.success();
+						},
+						error: function(myObject, error) {
+							// The delete failed.
+							// error is a Parse.Error with an error code and message.
+							response.error("Error: " + error.code + " " + error.message);
+						}
+					});
+					
+					
+				},
+				error: function(error) {
+					console.log("### Observation Object has NOT been retrieved. ");
+					response.error("Error: " + error.code + " " + error.message);
+				}
+			});
+		} else {
+			response.success();
 		}
 	}
 });
@@ -509,12 +538,27 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", async (request) => {
 /*
  * after a new Observation is added
  */
-Parse.Cloud.afterSave("GCUR_OBSERVATION", async (request) => {
-	console.log("*** afterSave triggered - START");
+Parse.Cloud.afterSave("GCUR_OBSERVATION", function(request, response) {
 	var objId = request.object.id;
 	var loc = request.object.get("Location");
 	var locObjId = loc.id;
 	console.log("*** afterSave triggered on GCUR_OBSERVATION [" + objId + "] for GCUR_LOCATION [" + locObjId + "]");
+	
+	if (request.user != undefined) {
+		var queryUser = new Parse.Query(Parse.User);
+		queryUser.equalTo("objectId", request.user.id);
+		
+		// Use the new "useMasterKey" option in the Parse Server Cloud Code to bypass ACLs or CLPs.
+		queryUser.first({ useMasterKey: true }).then(function (user) {
+			var userName = user.get("username");
+			console.log("*** afterSave GCUR_OBSERVATION requested by _User [" + userName + "] [" + request.user.id + "]");
+		}, function(error) {
+			console.log("*** afterSave GCUR_OBSERVATION requested by _User [" + request.user.id + "]");
+			console.error("Parse.User table lookup failed. Error: " + error.code + " " + error.message);
+		});
+	} else {
+		console.log("*** afterSave GCUR_OBSERVATION. Requesting user is undefined.");
+	}
 });
 
 /*
@@ -544,180 +588,191 @@ Parse.Cloud.afterSave("GCUR_LOCATION", function(request, response) {
 /**
  * Retrieve shared infos for shared locations for State
  */
-Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", async (request) => {
-	const stateName = request.params.state;
+Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, response) {
+	var stateName = request.params.state;
 	
-	let isBufferZonePntsForStateApplied = true;
-	let bufferZonePntsForState = null;
+	var isBufferZonePntsForStateApplied = true;
+	var bufferZonePntsForState = null;
 	
-	let sharedInfos = [];
+	var sharedInfos = [];
 	
-	const querySharedJurisSettings = new Parse.Query("GCUR_SHARED_JURIS_SETTINGS");
+	var querySharedJurisSettings = new Parse.Query("GCUR_SHARED_JURIS_SETTINGS");
 	querySharedJurisSettings.equalTo("Jurisdiction", stateName);		// Find the record for the input jurisdiction
 
 	// Find the "bufferZonePnts" for the input jurisdiction
 	// "bufferZonePnts" can be either the set point array, or "null" or "undefined" as well.
-	const jurisSetting = await querySharedJurisSettings.first();
-	bufferZonePntsForState = jurisSetting.get("bufferZonePnts");
-
-	if ((bufferZonePntsForState == null) || (bufferZonePntsForState == undefined))
-		isBufferZonePntsForStateApplied = false;
-
-	console.log("isBufferZonePntsForStateApplied = " + isBufferZonePntsForStateApplied + " for " + stateName);
-		
-	const queryObservation = new Parse.Query("GCUR_OBSERVATION");
-	queryObservation.include("Location");
-	queryObservation.equalTo("ObservationStatus", 1);			// Previous week's observations
-	queryObservation.limit(1000);
-	const obs = await queryObservation.find();
-
-	for (let j = 0; j < obs.length; j ++) {
-		// check if FinalisedDate is 30 days away
-		let isPrevObsTooOld = isObsTooOld(obs[j].get("FinalisedDate"));
-		if (!isPrevObsTooOld) {
-			const loc = obs[j].get("Location");
-			const isShareable = loc.get("Shareable");
-			const locStatus = loc.get("LocationStatus");
+	querySharedJurisSettings.first().then(function(jurisSetting) {
+		bufferZonePntsForState = jurisSetting.get("bufferZonePnts");
 			
-			// We only retrieve obs curing for locations that are shareable
-			if ( isShareable && (locStatus.toLowerCase() != "suspended") ) {
-				const locObjId = loc.id;
-				const locName = loc.get("LocationName");
-				const distNo = loc.get("DistrictNo");
-				const locLat = loc.get("Lat");
-				const locLng = loc.get("Lng");
+		if ((bufferZonePntsForState == null) || (bufferZonePntsForState == undefined))
+			isBufferZonePntsForStateApplied = false;
+			
+		return Parse.Promise.as("'bufferZonePnts' is found for jurisdiction " + stateName);
+	}, function(error) {
+		console.log("There was an error in finding Class 'GCUR_SHARED_JURIS_SETTINGS', but we continue to find previous observations.");
+		return Parse.Promise.as("There was an error in finding Class 'GCUR_SHARED_JURIS_SETTINGS', but we continue to find previous observations.");
+	}).then(function() {
+		console.log("isBufferZonePntsForStateApplied = " + isBufferZonePntsForStateApplied + " for " + stateName);
+		
+		var queryObservation = new Parse.Query("GCUR_OBSERVATION");
+		queryObservation.include("Location");
+		queryObservation.equalTo("ObservationStatus", 1);			// Previous week's observations
+		queryObservation.limit(1000);
+		
+		return queryObservation.find(); 
+	}).then(function(obs) {
+		for (var j = 0; j < obs.length; j ++) {
+			// check if FinalisedDate is 30 days away
+			var isPrevObsTooOld = isObsTooOld(obs[j].get("FinalisedDate"));
+			if (!isPrevObsTooOld) {
+				var loc = obs[j].get("Location");
+				var isShareable = loc.get("Shareable");
+				var locStatus = loc.get("LocationStatus");
 				
-				const obsObjId = obs[j].id;
-				
-				let prevOpsCuring = prevOpsDate = undefined;		// Either can be undefined.
-				
-				if (obs[j].has("AdminCuring")) {
-					prevOpsCuring = obs[j].get("AdminCuring");
-				} else if (obs[j].has("ValidatorCuring")) {
-					prevOpsCuring = obs[j].get("ValidatorCuring");
-				} else if (obs[j].has("AreaCuring")) {
-					prevOpsCuring = obs[j].get("AreaCuring");
-				}
-				
-				if (obs[j].has("AdminDate")) {
-					prevOpsDate = obs[j].get("AdminDate");
-				} else if (obs[j].has("ValidationDate")) {
-					prevOpsDate = obs[j].get("ValidationDate");
-				} else if (obs[j].has("ObservationDate")) {
-					prevOpsDate = obs[j].get("ObservationDate");
-				}
-				
-				if (prevOpsCuring == undefined) {
-					console.log(locName + " [" + locObjId + "] has no prevOpsCuring, so will not proceed to the further process.");
-				}
-
-				const finalisedDate = obs[j].get("FinalisedDate");
-				
-				// In Array; convert raw string to JSON Array
-				// For example, "[{"st":"VIC","sh":false},{"st":"QLD","sh":true},{"st":"NSW","sh":true}]"
-				if (obs[j].has("SharedBy") && (prevOpsCuring != undefined)) {
-					const sharedByInfo = JSON.parse(obs[j].get("SharedBy"));
+				// We only retrieve obs curing for locations that are shareable
+				if ( isShareable && (locStatus.toLowerCase() != "suspended") ) {
+					var locObjId = loc.id;
+					var locName = loc.get("LocationName");
+					var distNo = loc.get("DistrictNo");
+					var locLat = loc.get("Lat");
+					var locLng = loc.get("Lng");
 					
-					for (let p = 0; p < sharedByInfo.length; p ++) {
-						if (sharedByInfo[p]["st"] == stateName) {
-							const isSharedByState = sharedByInfo[p]["sh"];
-							
-							let returnedItem = {
-								"obsObjId" : obsObjId,
-								"locObjId"	: locObjId,
-								"locName" : locName,
-								"locStatus" : locStatus,
-								"distNo" : distNo,
-								"isSharedByState" : isSharedByState,
-								"prevOpsCuring" : prevOpsCuring,
-								"prevOpsDate" : prevOpsDate,
-								"lat" : locLat,
-								"lng" : locLng,
-								"finalisedDate" : finalisedDate
-							};
-							
-							sharedInfos.push(returnedItem);
-							break;
+					var obsObjId = obs[j].id;
+					
+					var prevOpsCuring = prevOpsDate = undefined;		// Either can be undefined.
+					
+					if (obs[j].has("AdminCuring")) {
+						prevOpsCuring = obs[j].get("AdminCuring");
+					} else if (obs[j].has("ValidatorCuring")) {
+						prevOpsCuring = obs[j].get("ValidatorCuring");
+					} else if (obs[j].has("AreaCuring")) {
+						prevOpsCuring = obs[j].get("AreaCuring");
+					}
+					
+					if (obs[j].has("AdminDate")) {
+						prevOpsDate = obs[j].get("AdminDate");
+					} else if (obs[j].has("ValidationDate")) {
+						prevOpsDate = obs[j].get("ValidationDate");
+					} else if (obs[j].has("ObservationDate")) {
+						prevOpsDate = obs[j].get("ObservationDate");
+					}
+					
+					if (prevOpsCuring == undefined) {
+						console.log(locName + " [" + locObjId + "] has no prevOpsCuring, so will not proceed to the further process.");
+					}
+	
+					var finalisedDate = obs[j].get("FinalisedDate");
+					
+					// In Array; convert raw string to JSON Array
+					// For example, "[{"st":"VIC","sh":false},{"st":"QLD","sh":true},{"st":"NSW","sh":true}]"
+					if (obs[j].has("SharedBy") && (prevOpsCuring != undefined)) {
+						var sharedByInfo = JSON.parse(obs[j].get("SharedBy"));
+						
+						var isSharedByState;
+						
+						for (var p = 0; p < sharedByInfo.length; p ++) {
+							if (sharedByInfo[p]["st"] == stateName) {
+								isSharedByState = sharedByInfo[p]["sh"];
+								
+								var returnedItem = {
+									"obsObjId" : obsObjId,
+									"locObjId"	: locObjId,
+									"locName" : locName,
+									"locStatus" : locStatus,
+									"distNo" : distNo,
+									"isSharedByState" : isSharedByState,
+									"prevOpsCuring" : prevOpsCuring,
+									"prevOpsDate" : prevOpsDate,
+									"lat" : locLat,
+									"lng" : locLng,
+									"finalisedDate" : finalisedDate
+								};
+								
+								sharedInfos.push(returnedItem);
+								break;
+							}
 						}
 					}
 				}
 			}
 		}
-	}
-	
-	let returnedObj = {
-		"state" : stateName,
-		"sharedInfos" : sharedInfos
-	};
-	
-	// If isBufferZonePntsForStateApplied is false OR sharedInfos contains zero element
-	if ((isBufferZonePntsForStateApplied == false) || (sharedInfos.length < 1)) {
-		console.log("Not to apply buffer zone for " + stateName + " OR sharedInfos contains zero element.");
-	}
-	// apply Turf package for buffering
-	else {
-		let searchWithin = {
-				"type": "FeatureCollection",
-				"features": [
-				  {
-					  "type": "Feature",
-					  "properties": {},
-					  "geometry": {
-						"type": "Polygon",
-						"coordinates": new Array()
-					  }
-				  }
-				]
+		
+		var returnedObj = {
+			"state" : stateName,
+			"sharedInfos" : sharedInfos
 		};
 		
-		bufferZonePntsForState = JSON.parse(bufferZonePntsForState);
-		searchWithin["features"][0]["geometry"]["coordinates"].push(bufferZonePntsForState);
-
-		let pointsToCheck = {
-				"type": "FeatureCollection",
-				"features": []
-		};
-		
-		for (let j = 0; j < sharedInfos.length; j++) {
-			const obsObjId = sharedInfos[j]["obsObjId"];
-			const lat = sharedInfos[j]["lat"];
-			const lng = sharedInfos[j]["lng"];
-			
-			let featureObj = {
-					"type": "Feature",
-					"properties": {"obsObjId" : obsObjId},
-					"geometry": {
-						"type": "Point",
-						"coordinates": [lng, lat]
-					}
+		// If isBufferZonePntsForStateApplied is false OR sharedInfos contains zero element
+		if ((isBufferZonePntsForStateApplied == false) || (sharedInfos.length < 1)) {
+			console.log("Not to apply buffer zone for " + stateName + " OR sharedInfos contains zero element.");
+		}
+		// apply Turf package for buffering
+		else {
+			var searchWithin = {
+					"type": "FeatureCollection",
+					"features": [
+				      {
+				    	  "type": "Feature",
+				    	  "properties": {},
+				    	  "geometry": {
+					        "type": "Polygon",
+					        "coordinates": new Array()
+					      }
+				      }
+				    ]
 			};
 			
-			pointsToCheck["features"].push(featureObj);
-		}
-		
-		// Use Turf to retrieve points that are within the buffer zone
-		const ptsWithin = turf.within(pointsToCheck, searchWithin);
-		
-		let sharedInfosFiltered = [];
-		
-		console.log("Out of a total of " + sharedInfos.length + " observations, " + ptsWithin["features"].length + " are within the buffer zone of " + stateName);
-		
-		for (let m = 0; m < ptsWithin["features"].length; m++) {
-			for (let n = 0; n < sharedInfos.length; n++) {
-				if (ptsWithin["features"][m]["properties"]["obsObjId"] == sharedInfos[n]["obsObjId"]) {
-					sharedInfosFiltered.push(sharedInfos[n]);
-					break;
+			bufferZonePntsForState = JSON.parse(bufferZonePntsForState);
+			searchWithin["features"][0]["geometry"]["coordinates"].push(bufferZonePntsForState);
+
+			var pointsToCheck = {
+					"type": "FeatureCollection",
+					"features": []
+			};
+			
+			for (var j = 0; j < sharedInfos.length; j++) {
+				var obsObjId = sharedInfos[j]["obsObjId"];
+				var lat = sharedInfos[j]["lat"];
+				var lng = sharedInfos[j]["lng"];
+				
+				var featureObj = {
+						"type": "Feature",
+					    "properties": {"obsObjId" : obsObjId},
+					    "geometry": {
+					    	"type": "Point",
+					    	"coordinates": [lng, lat]
+					    }
+				};
+				
+				pointsToCheck["features"].push(featureObj);
+			}
+			
+			// Use Turf to retrieve points that are within the buffer zone
+			var ptsWithin = turf.within(pointsToCheck, searchWithin);
+			
+			var sharedInfosFiltered = [];
+			
+			console.log("Out of a total of " + sharedInfos.length + " observations, " + ptsWithin["features"].length + " are within the buffer zone of " + stateName);
+			
+			for (var m = 0; m < ptsWithin["features"].length; m++) {
+				for (var n = 0; n < sharedInfos.length; n++) {
+					if (ptsWithin["features"][m]["properties"]["obsObjId"] == sharedInfos[n]["obsObjId"]) {
+						sharedInfosFiltered.push(sharedInfos[n]);
+						break;
+					}
 				}
 			}
+			
+			returnedObj = {
+				"state" : stateName,
+				"sharedInfos" : sharedInfosFiltered
+			};
 		}
 		
-		returnedObj = {
-			"state" : stateName,
-			"sharedInfos" : sharedInfosFiltered
-		};
-	}
-	
-	return returnedObj;
+		return response.success(returnedObj);
+	}, function(error) {
+		response.error("Error: " + error.code + " " + error.message);
+	});
 });
 
 /**
@@ -1167,35 +1222,38 @@ Parse.Cloud.define("getRunModelDetails", function(request, response) {
 	});
 });
 
-Parse.Cloud.define("getAllSimpleMMRUserRoleForRole", async (request) => {
-	const roleObjectId = request.params.objectId;
+Parse.Cloud.define("getAllSimpleMMRUserRoleForRole", function(request, response) {
+  var roleObjectId = request.params.objectId;
+  var roleName = null;
   
-	const queryRole = new Parse.Query(Parse.Role);
-  	queryRole.equalTo("objectId", roleObjectId);
-	const roles = await queryRole.find();
-	const roleName = roles[0].get("name");
-
-	const queryMMR = new Parse.Query("GCUR_MMR_USER_ROLE");
-	// Include the post data with each comment
-	queryMMR.include("user");
-	queryMMR.include("role");
-	queryMMR.limit(1000);
-	const results = await queryMMR.find({ useMasterKey: true });
-
-    const userStatusList = [];
+  var queryRole = new Parse.Query(Parse.Role);
+  queryRole.equalTo("objectId", roleObjectId);
+  queryRole.find().then(function (roles) {
+	  roleName = roles[0].get("name");
+	  
+	  var queryMMR = new Parse.Query("GCUR_MMR_USER_ROLE");
+	  // Include the post data with each comment
+	  queryMMR.include("user");
+	  queryMMR.include("role");
+	  queryMMR.limit(1000);
+	  return queryMMR.find({ useMasterKey: true });
+  }).then(function(results) {
+	  var userStatsusForRole = null;
+      var userStatusList = []
       
-	for (let i = 0; i < results.length; i++) {
-		const role = results[i].get("role");
-        const roleObjId = role.id;
+      for (var i = 0; i < results.length; i++) {
+
+        var role = results[i].get("role");
+        var roleObjId = role.id;
         if (roleObjId == roleObjectId) {
-        	//roleName = role.get("name");
-        	const user = results[i].get("user");
-            const username = user.get("username");
-            const firstname = user.get("firstName");
-            const lastname = user.get("lastName");
-            const email = user.get("email");
-            const userObjId = user.id;
-            const simpleUser = {
+        	roleName = role.get("name");
+        	var user = results[i].get("user");
+            var username = user.get("username");
+            var firstname = user.get("firstName");
+            var lastname = user.get("lastName");
+            var email = user.get("email");
+            var userObjId = user.id;
+            var simpleUser = {
               "objectId": userObjId,
     		  "username": username,
     		  "firstName": firstname,
@@ -1203,10 +1261,10 @@ Parse.Cloud.define("getAllSimpleMMRUserRoleForRole", async (request) => {
     		  "email": email
     	    };
             
-            const status = results[i].get("status");
-            const thisMMRObjIid = results[i].id;
+            var status = results[i].get("status");
+            var thisMMRObjIid = results[i].id;
             
-            const userStatus = {
+            var userStatus = {
               "simpleUser": simpleUser,
               "status": status,
               "thisMMRObjId" : thisMMRObjIid
@@ -1214,39 +1272,40 @@ Parse.Cloud.define("getAllSimpleMMRUserRoleForRole", async (request) => {
 
             userStatusList.push(userStatus);
         }
-	  }
-	  
-      const userStatsusForRole = {
+      }
+      userStatsusForRole = {
         "roleObjectId": roleObjectId,
         "roleName": roleName,
         "userStatusList": userStatusList
       }
-	 return userStatsusForRole;
+      response.success(userStatsusForRole);
+  }, function(error) {
+	  response.error("GCUR_MMR_USER_ROLE lookup failed");
+  });
 });
 
-Parse.Cloud.define("getAllSimpleMMRUserRoleForUser", async (request) => {
+Parse.Cloud.define("getAllSimpleMMRUserRoleForUser", function(request, response) {
 	var userObjectId = request.params.objectId;
 	var userName = null;
 	
-	try {
-	
-		var queryUser = new Parse.Query(Parse.User);
-		queryUser.equalTo("objectId", userObjectId);
-		const user = await queryUser.first({ useMasterKey: true });
-		userName = user.get("username");
-		const queryMMR = new Parse.Query("GCUR_MMR_USER_ROLE");
-		// Include the post data with each comment
-		queryMMR.include("user");
-		queryMMR.include("role");
-		queryMMR.limit(1000);
-		const results = await queryMMR.find({ useMasterKey: true });
-		var roleStatsusForUser = null;
-		var roleStatusList = []
-			  
-		for (var i = 0; i < results.length; i++) {
+	var queryUser = new Parse.Query(Parse.User);
+	queryUser.equalTo("objectId", userObjectId);
+	queryUser.first({ useMasterKey: true }).then(function (user) {
+		  userName = user.get("username");
+		  var queryMMR = new Parse.Query("GCUR_MMR_USER_ROLE");
+		  // Include the post data with each comment
+		  queryMMR.include("user");
+		  queryMMR.include("role");
+		  queryMMR.limit(1000);
+		  return queryMMR.find({ useMasterKey: true });
+	}).then(function(results) {
+		  var roleStatsusForUser = null;
+	      var roleStatusList = []
+	      
+	      for (var i = 0; i < results.length; i++) {
 
-	        var this_user = results[i].get("user");
-	        var usrObjId = this_user.id;
+	        var user = results[i].get("user");
+	        var usrObjId = user.id;
 	        if (usrObjId == userObjectId) {
 	        	var role = results[i].get("role");
 	            var roleName = role.get("name");
@@ -1265,27 +1324,26 @@ Parse.Cloud.define("getAllSimpleMMRUserRoleForUser", async (request) => {
 
 	            roleStatusList.push(roleStatus);
 	        }
-		}
-		roleStatsusForUser = {
-				"userObjectId": userObjectId,
-				"userName": userName,
-				"roleStatusList": roleStatusList
-		}
-		return roleStatsusForUser;
-	} catch (e) {
-		console.log(e);
-		throw new Error("Error: " + e.code + " " + e.message);
-	}
-});
+	      }
+	      roleStatsusForUser = {
+	        "userObjectId": userObjectId,
+	        "userName": userName,
+	        "roleStatusList": roleStatusList
+	      }
+	      response.success(roleStatsusForUser);
+	  }, function(error) {
+		  response.error("Error: " + error.code + " " + error.message);
+	  });
+	});
 
-Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
-	const ALL_DISTRICT = "9999";		// If the districtNo == 9999, return all active locatons.
+Parse.Cloud.define("getSimpleObservationsForUser", function(request, response) {
+	var ALL_DISTRICT = "9999";		// If the districtNo == 9999, return all active locatons.
 	
-	const userObjectId = request.params.objectId;
-	const userRoleName = request.params.roleName;
-	const districtNo = request.params.districtNo;		// If districtNo == "ALL_DISTRICT", get all active locations.
+	var userObjectId = request.params.objectId;
+	var userRoleName = request.params.roleName;
+	var districtNo = request.params.districtNo;		// If districtNo == ALL_DISTRICT, get all active locations.
 	
-	const obsList = [];	// the output array for response
+	var obsList = [];	// the output array for response
 	
 	/*
 	 * An example of result
@@ -1321,241 +1379,276 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 	// if the user is of Observers role, we look into the MMR table first to fetch all Active locations associated
 	if (userRoleName == "Observers") {
 		
-		const queryMMR = new Parse.Query("GCUR_MMR_OBSERVER_LOCATION");
+		var queryMMR = new Parse.Query("GCUR_MMR_OBSERVER_LOCATION");
 		// Include the Observer and Location data with each GCUR_MMR_OBSERVER_LOCATION
 		queryMMR.include("Observer");
 		queryMMR.include("Location");
 		queryMMR.limit(1000);
-		const mmrResults = await queryMMR.find({ useMasterKey: true });
-		
-		for (let i = 0; i < mmrResults.length; i ++) {
-			const mmr = mmrResults[i];
-			const observer = mmr.get("Observer");
-			const observerObjId = observer.id;
-			
-			// when Observer matches the param
-			if (observerObjId == userObjectId) {
-				const location = mmr.get("Location");
-				const locationObjId = location.id;
-				const locationName = location.get("LocationName");
-				const locationStatus = location.get("LocationStatus");
-				const locationLat = location.get("Lat");
-				const locationLng = location.get("Lng");
-				const locationDistrictNo = location.get("DistrictNo");
-				const locationShareable = location.get("Shareable");
+		queryMMR.find({ useMasterKey: true }).then(function(results) {
+			// Create a trivial resolved promise as a base case.
+		    var promises = [];
+		    // each result is a GCUR_MMR_OBSERVER_LOCATION row
+		    _.each(results, function(result) {
+		    	var observer = result.get("Observer");
+				var observerObjId = observer.id;
+				
+				// when Observer matches the param
+				if (observerObjId == userObjectId) {
+					var location = result.get("Location");
+					var locationObjId = location.id;
+					var locationName = location.get("LocationName");
+					var locationStatus = location.get("LocationStatus");
+					var locationLat = location.get("Lat");
+					var locationLng = location.get("Lng");
+					var locationDistrictNo = location.get("DistrictNo");
+					var locationShareable = location.get("Shareable");
 					
-				let obs = {};
+					var obs = null;
 					
-				let isLocInDistrict = false;
-				// If the input districtNo is 9999 which is for all districts
-				if (districtNo == ALL_DISTRICT)
-					isLocInDistrict = true;
-				else if (locationDistrictNo == districtNo)
-					isLocInDistrict = true;
+					var isLocInDistrict = false;
+					// If the input districtNo is 9999 which is for all districts
+					if (districtNo == ALL_DISTRICT)
+						isLocInDistrict = true;
+					else if (locationDistrictNo == districtNo)
+						isLocInDistrict = true;
 					
-				const SUSPENDED_STR = "suspended";
+					var SUSPENDED_STR = "suspended";
 					
-				// Only find observation record for those locations that are not suspended
-				if( (locationStatus.toLowerCase() != SUSPENDED_STR.toLowerCase()) && isLocInDistrict ) {
-					const queryObservation = new Parse.Query("GCUR_OBSERVATION");
-					queryObservation.equalTo("Location", location);	// By _Pointer
-					queryObservation.limit(1000);
-					queryObservation.notEqualTo("ObservationStatus", 2);						// excludes the archived observation
-					queryObservation.ascending("ObservationStatus");							// this enables fetching current(0) and previous(1) observations in order
-					const results = await queryObservation.find({ useMasterKey: true });		// results are JavaScript Array of GCUR_OBSERVATION objects						
+					// Only find observation record for those locations that are not suspended
+		            if( (locationStatus.toLowerCase() != SUSPENDED_STR.toLowerCase()) && isLocInDistrict ) {
+		            	var queryObservation = new Parse.Query("GCUR_OBSERVATION");
+						queryObservation.equalTo("Location", location);	// By _Pointer
+						queryObservation.limit(1000);
+						queryObservation.notEqualTo("ObservationStatus", 2);	// excludes the archived observation
+						queryObservation.ascending("ObservationStatus");	// this enables fetching current(0) and previous(1) observations
 						
-					let observationObjId, areaCuring, validatorCuring, adminCuring, validated;
-					let prevOpsCuring;
-					let userFuelLoad;
-						
-					// results length = 0 if there is no observation
-					// results length = 1 if there is either current or previous observation; further checking is required
-					// results length = 2 if there are both current and previous observations
-					if (results.length > 0) {									
-						if ((results.length == 1) && (results[0].get("ObservationStatus") == 1)) {		// Only previous observation exists for the Location
-							// results[0] is GCUR_OBSERVATION for previous observation
+						promises.push(queryObservation.find({
+							success : function(results) {
+								// results are JavaScript Array of GCUR_OBSERVATION objects
+								
+								var observationObjId, areaCuring, validatorCuring, adminCuring, validated;
+								var prevOpsCuring;
+								var userFuelLoad;
+								
+								// result length = 0 if there is no observation
+								// result length = 1 if there is either current or previous observation; further checking is required
+								// result length = 2 if there are both current and previous observations
+								
+								if (results.length > 0) {
+									// Only previous observation exists for the Location
+									if ((results.length == 1) && (results[0].get("ObservationStatus") == 1)) {
+										// results[0] is GCUR_OBSERVATION for previous observation
 										
-							// check if FinalisedDate is 30 days away
-							const isPrevObsTooOld = isObsTooOld(results[0].get("FinalisedDate"));
-							if (!isPrevObsTooOld) {
-								if (results[0].has("AdminCuring")) {
-									prevOpsCuring = results[0].get("AdminCuring");
-								} else if (results[0].has("ValidatorCuring")) {
-									prevOpsCuring = results[0].get("ValidatorCuring");
-								} else {
-									prevOpsCuring = results[0].get("AreaCuring");
-								}
-							}
-						} else {	// current observation exists
-							observationObjId = results[0].id;
-							if (results[0].has("AreaCuring"))
-								areaCuring = results[0].get("AreaCuring");
-							if (results[0].has("ValidatorCuring"))
-								validatorCuring = results[0].get("ValidatorCuring");
-							if (results[0].has("AdminCuring"))
-								adminCuring = results[0].get("AdminCuring");
-							if (results[0].has("UserFuelLoad"))
-								userFuelLoad = results[0].get("UserFuelLoad");
-							
-							if (results[0].has("ValidatorCuring") || results[0].has("AdminCuring"))
-								validated = "validated";
-							
-							if (results.length == 2) {		// results[1] is GCUR_OBSERVATION for previous observation											
-								// check if FinalisedDate is 30 days away
-								const isPrevObsTooOld = isObsTooOld(results[1].get("FinalisedDate"));
-								if (!isPrevObsTooOld) {
-									if (results[1].has("AdminCuring")) {
-										prevOpsCuring = results[1].get("AdminCuring");
-									} else if (results[1].has("ValidatorCuring")) {
-										prevOpsCuring = results[1].get("ValidatorCuring");
+										// check if FinalisedDate is 30 days away
+										var isPrevObsTooOld = isObsTooOld(results[0].get("FinalisedDate"));
+										if (!isPrevObsTooOld) {
+											if (results[0].has("AdminCuring")) {
+												prevOpsCuring = results[0].get("AdminCuring");
+											} else if (results[0].has("ValidatorCuring")) {
+												prevOpsCuring = results[0].get("ValidatorCuring");
+											} else {
+												prevOpsCuring = results[0].get("AreaCuring");
+											}
+										}
 									} else {
-										prevOpsCuring = results[1].get("AreaCuring");
+										// current observation exists
+										observationObjId = results[0].id;
+										if (results[0].has("AreaCuring"))
+											areaCuring = results[0].get("AreaCuring");
+										if (results[0].has("ValidatorCuring"))
+											validatorCuring = results[0].get("ValidatorCuring");
+										if (results[0].has("AdminCuring"))
+											adminCuring = results[0].get("AdminCuring");
+										if (results[0].has("UserFuelLoad"))
+											userFuelLoad = results[0].get("UserFuelLoad");
+										
+										if (results[0].has("ValidatorCuring") || results[0].has("AdminCuring"))
+											validated = "validated";
+										
+										if (results.length == 2) {
+											// results[1] is GCUR_OBSERVATION for previous observation
+											
+											// check if FinalisedDate is 30 days away
+											var isPrevObsTooOld = isObsTooOld(results[1].get("FinalisedDate"));
+											if (!isPrevObsTooOld) {
+												if (results[1].has("AdminCuring")) {
+													prevOpsCuring = results[1].get("AdminCuring");
+												} else if (results[1].has("ValidatorCuring")) {
+													prevOpsCuring = results[1].get("ValidatorCuring");
+												} else {
+													prevOpsCuring = results[1].get("AreaCuring");
+												}
+											}
+										}
 									}
 								}
-							}
-						}
-					}
 								
-					obs = {
-						"locationObjId": locationObjId,
-						"locationName": locationName,
-						"locationStatus" : locationStatus,
-						"locationLat": locationLat,
-						"locationLng": locationLng,
-						"locationDistrictNo": locationDistrictNo,
-						"locationShareable": locationShareable,
-						"observationObjId": observationObjId,
-						"areaCuring": areaCuring,
-						"validatorCuring": validatorCuring,
-						"adminCuring": adminCuring,
-						"validated": validated,
-						"prevOpsCuring": prevOpsCuring,
-						"userFuelLoad": userFuelLoad
-					};
-					
-					obsList.push(obs);
+								obs = {
+									"locationObjId" : 	locationObjId,
+									"locationName" : locationName,
+									"locationStatus" : locationStatus,
+									"locationLat": locationLat,
+									"locationLng": locationLng,
+									"locationDistrictNo": locationDistrictNo,
+									"locationShareable" : locationShareable,
+									"observationObjId" : observationObjId,
+									"areaCuring" : areaCuring,
+									"validatorCuring" : validatorCuring,
+									"adminCuring" : adminCuring,
+									"validated" : validated,
+									"prevOpsCuring" : prevOpsCuring,
+									"userFuelLoad" : userFuelLoad
+								};
+								obsList.push(obs);							
+							},
+							error : function(error) {
+								return Parse.Promise.error("There was an error in finding Observations.");
+							}
+						}));
+		            }
 				}
-			}
-		}
+		    });
+		    // Return a new promise that is resolved when all of the promises are resolved
+		    return Parse.Promise.when(promises);
+		}).then(function() {
+		    response.success(obsList);
+		}, function(error) {
+			response.error("Error: " + error.code + " " + error.message);
+		});
+		
 	// If the user is Validator or Administrator
 	} else {
-		const queryLocation = new Parse.Query("GCUR_LOCATION");
+		var queryLocation = new Parse.Query("GCUR_LOCATION");
 		queryLocation.ascending("LocationName");
 		queryLocation.limit(1000);
-		const locationResults = await queryLocation.find();
-		
-		for (let i = 0; i < locationResults.length; i ++) {
-			const location = locationResults[i];
-			
-			const locationObjId = location.id;
-			const locationName = location.get("LocationName");
-			const locationStatus = location.get("LocationStatus");
-			const locationLat = location.get("Lat");
-			const locationLng = location.get("Lng");
-			const locationDistrictNo = location.get("DistrictNo");
-			const locationShareable = location.get("Shareable");
+		queryLocation.find().then(function(results) {
+			// Create a trivial resolved promise as a base case.
+		    var promises = [];
+		    // each result is a GCUR_LOCATION row
+		    _.each(results, function(result) {
+					var location = result;
+					var locationObjId = location.id;
+					var locationName = location.get("LocationName");
+					var locationStatus = location.get("LocationStatus");
+					var locationLat = location.get("Lat");
+					var locationLng = location.get("Lng");
+					var locationDistrictNo = location.get("DistrictNo");
+					var locationShareable = location.get("Shareable");
 					
-			let obs = {};
+					var obs = null;
 					
-			let isLocInDistrict = false;
-			// If the input districtNo is 9999 which is for all districts
-			if (districtNo == ALL_DISTRICT)
-				isLocInDistrict = true;
-			else if (locationDistrictNo == districtNo)
-				isLocInDistrict = true;
+					var isLocInDistrict = false;
+					// If the input districtNo is 9999 which is for all districts
+					if (districtNo == ALL_DISTRICT)
+						isLocInDistrict = true;
+					else if (locationDistrictNo == districtNo)
+						isLocInDistrict = true;
 					
-			const SUSPENDED_STR = "suspended";
-			//console.log("--- ", locationObjId,  locationName, locationStatus, locationDistrictNo, isLocInDistrict);
-			
-			// Only find observation record for those locations that are not suspended
-			if( (locationStatus.toLowerCase() != SUSPENDED_STR.toLowerCase()) && isLocInDistrict ) {
-		       	const queryObservation = new Parse.Query("GCUR_OBSERVATION");
-				queryObservation.equalTo("Location", location);	// By _Pointer
-				queryObservation.limit(1000);
-				queryObservation.notEqualTo("ObservationStatus", 2);	// excludes the archived observation
-				queryObservation.ascending("ObservationStatus");	// this enables fetching current(0) and previous(1) observations
-				const results = await queryObservation.find({ useMasterKey: true });		// results are JavaScript Array of GCUR_OBSERVATION objects	
-								
-				let observationObjId, areaCuring, validatorCuring, adminCuring, validated;
-				let prevOpsCuring;
-				let userFuelLoad, validatorFuelLoad;
-								
-				// result length = 0 if there is no observation
-				// result length = 1 if there is either current or previous observation; further checking is required
-				// result length = 2 if there are both current and previous observations
-				if (results.length > 0) {
-					// Only previous observation exists for the Location
-					if ((results.length == 1) && (results[0].get("ObservationStatus") == 1)) {
-						// results[0] is GCUR_OBSERVATION for previous observation		
-						// check if FinalisedDate is 30 days away
-						const isPrevObsTooOld = isObsTooOld(results[0].get("FinalisedDate"));
-						if (!isPrevObsTooOld) {
-							if (results[0].has("AdminCuring")) {
-								prevOpsCuring = results[0].get("AdminCuring");
-							} else if (results[0].has("ValidatorCuring")) {
-								prevOpsCuring = results[0].get("ValidatorCuring");
-							} else {
-								prevOpsCuring = results[0].get("AreaCuring");
-							}
-						}
+					var SUSPENDED_STR = "suspended";
+					// Only find observation record for those locations that are not suspended
+					if( (locationStatus.toLowerCase() != SUSPENDED_STR.toLowerCase()) && isLocInDistrict ) {
+		            	var queryObservation = new Parse.Query("GCUR_OBSERVATION");
+						queryObservation.equalTo("Location", location);	// By _Pointer
+						queryObservation.limit(1000);
+						queryObservation.notEqualTo("ObservationStatus", 2);	// excludes the archived observation
+						queryObservation.ascending("ObservationStatus");	// this enables fetching current(0) and previous(1) observations
 						
-					} else {
-						// current observation exists
-						observationObjId = results[0].id;
-						if (results[0].has("AreaCuring"))
-							areaCuring = results[0].get("AreaCuring");
-						if (results[0].has("ValidatorCuring"))
-							validatorCuring = results[0].get("ValidatorCuring");
-						if (results[0].has("AdminCuring"))
-							adminCuring = results[0].get("AdminCuring");
-						if (results[0].has("UserFuelLoad"))
-							userFuelLoad = results[0].get("UserFuelLoad");
-						if (results[0].has("ValidatorFuelLoad"))
-							validatorFuelLoad = results[0].get("ValidatorFuelLoad");
-						if (results[0].has("ValidatorCuring") || results[0].has("AdminCuring"))
-							validated = "validated";
+						promises.push(queryObservation.find({
+							success : function(results) {
+								// results are JavaScript Array of GCUR_OBSERVATION objects
+								
+								var observationObjId, areaCuring, validatorCuring, adminCuring, validated;
+								var prevOpsCuring;
+								var userFuelLoad, validatorFuelLoad;
+								
+								// result length = 0 if there is no observation
+								// result length = 1 if there is either current or previous observation; further checking is required
+								// result length = 2 if there are both current and previous observations
+								
+								if (results.length > 0) {
+									// Only previous observation exists for the Location
+									if ((results.length == 1) && (results[0].get("ObservationStatus") == 1)) {
+										// results[0] is GCUR_OBSERVATION for previous observation
 										
-						if (results.length == 2) {
-							// results[1] is GCUR_OBSERVATION for previous observation
-							// check if FinalisedDate is 30 days away
-							const isPrevObsTooOld = isObsTooOld(results[1].get("FinalisedDate"));
-							if (!isPrevObsTooOld) {
-								if (results[1].has("AdminCuring")) {
-									prevOpsCuring = results[1].get("AdminCuring");
-								} else if (results[1].has("ValidatorCuring")) {
-									prevOpsCuring = results[1].get("ValidatorCuring");
-								} else {
-									prevOpsCuring = results[1].get("AreaCuring");
+										// check if FinalisedDate is 30 days away
+										var isPrevObsTooOld = isObsTooOld(results[0].get("FinalisedDate"));
+										if (!isPrevObsTooOld) {
+											if (results[0].has("AdminCuring")) {
+												prevOpsCuring = results[0].get("AdminCuring");
+											} else if (results[0].has("ValidatorCuring")) {
+												prevOpsCuring = results[0].get("ValidatorCuring");
+											} else {
+												prevOpsCuring = results[0].get("AreaCuring");
+											}
+										}
+									} else {
+										// current observation exists
+										observationObjId = results[0].id;
+										if (results[0].has("AreaCuring"))
+											areaCuring = results[0].get("AreaCuring");
+										if (results[0].has("ValidatorCuring"))
+											validatorCuring = results[0].get("ValidatorCuring");
+										if (results[0].has("AdminCuring"))
+											adminCuring = results[0].get("AdminCuring");
+										if (results[0].has("UserFuelLoad"))
+											userFuelLoad = results[0].get("UserFuelLoad");
+										if (results[0].has("ValidatorFuelLoad"))
+											validatorFuelLoad = results[0].get("ValidatorFuelLoad");
+										
+										if (results[0].has("ValidatorCuring") || results[0].has("AdminCuring"))
+											validated = "validated";
+										
+										if (results.length == 2) {
+											// results[1] is GCUR_OBSERVATION for previous observation
+											
+											// check if FinalisedDate is 30 days away
+											var isPrevObsTooOld = isObsTooOld(results[1].get("FinalisedDate"));
+											if (!isPrevObsTooOld) {
+												if (results[1].has("AdminCuring")) {
+													prevOpsCuring = results[1].get("AdminCuring");
+												} else if (results[1].has("ValidatorCuring")) {
+													prevOpsCuring = results[1].get("ValidatorCuring");
+												} else {
+													prevOpsCuring = results[1].get("AreaCuring");
+												}
+											}
+										}
+									}
 								}
+								
+								obs = {
+									"locationObjId" : 	locationObjId,
+									"locationName" : locationName,
+									"locationStatus" : locationStatus,
+									"locationLat": locationLat,
+									"locationLng": locationLng,
+									"locationDistrictNo": locationDistrictNo,
+									"locationShareable" : locationShareable,
+									"observationObjId" : observationObjId,
+									"areaCuring" : areaCuring,
+									"validatorCuring" : validatorCuring,
+									"adminCuring" : adminCuring,
+									"validated" : validated,
+									"prevOpsCuring" : prevOpsCuring,
+									"userFuelLoad" : userFuelLoad,
+									"validatorFuelLoad" : validatorFuelLoad
+								};
+								obsList.push(obs);							
+							},
+							error : function(error) {
+								return Parse.Promise.error("There was an error in finding Observations.");
 							}
-						}
-					}
-				}
-
-				obs = {
-					"locationObjId" : locationObjId,
-					"locationName" : locationName,
-					"locationStatus" : locationStatus,
-					"locationLat" : locationLat,
-					"locationLng" : locationLng,
-					"locationDistrictNo" : locationDistrictNo,
-					"locationShareable" : locationShareable,
-					"observationObjId" : observationObjId,
-					"areaCuring" : areaCuring,
-					"validatorCuring" : validatorCuring,
-					"adminCuring" : adminCuring,
-					"validated" : validated,
-					"prevOpsCuring" : prevOpsCuring,
-					"userFuelLoad" : userFuelLoad,
-					"validatorFuelLoad" : validatorFuelLoad
-				};
-					
-				obsList.push(obs);
-			}
-		}
-	}
-	
-	return obsList;
+						}));
+		            }
+		    });
+		    // Return a new promise that is resolved when all of the promises are resolved
+		    return Parse.Promise.when(promises);
+		}).then(function() {
+		    response.success(obsList);
+		}, function(error) {
+			response.error("Error: " + error.code + " " + error.message);
+		});
+	}	
 });
 
 Parse.Cloud.define("getObsForInputToVISCA", function(request, response) {
@@ -1646,42 +1739,62 @@ Parse.Cloud.define("getObsForInputToVISCA", function(request, response) {
 	});
 });
 
-Parse.Cloud.define("getCountOfLocsForDistricts", async (request) => {	
-	const districtList = [];	// the output array for response
+Parse.Cloud.define("getCountOfLocsForDistricts", function(request, response) {
+	console.log("Triggering the Cloud Function 'getCountOfLocsForDistricts'");
 	
-	// Find districts
-	const queryDistrict = new Parse.Query("GCUR_DISTRICT");
+	var districtList = [];	// the output array for response
+	
+	var queryDistrict = new Parse.Query("GCUR_DISTRICT");
 	queryDistrict.ascending("DIST_NAME");
 	queryDistrict.limit(1000);
 	queryDistrict.select("DISTRICT", "DIST_NAME");
-	const districtResults = await queryDistrict.find();
-	
-	// For each district, find count of locations that fall into the district.
-	for (let i = 0; i < districtResults.length; i ++) {
-		const district = districtResults[i];
-		const districtObjId = district.id;
-		const districtNo = district.get("DISTRICT");
-		const districtName = district.get("DIST_NAME");
-		
-		const queryLocation = new Parse.Query("GCUR_LOCATION");
-		queryLocation.equalTo("DistrictNo", districtNo);
-		queryLocation.notEqualTo("LocationStatus", "suspended");
-		queryLocation.limit(1000);
-		queryLocation.ascending("LocationName");
-		const locationResults = await queryLocation.find();
-		
-		const countOfLocations = locationResults.length;
-		
-		const res = {
-			"districtObjId" : districtObjId,
-			"districtNo" : 	districtNo,
-			"districtName" : districtName,
-			"countOfLocations" : countOfLocations
-		};
-		districtList.push(res);
-	}
-	
-	return districtList;
+	queryDistrict.find().then(function(results) {
+		// Create a trivial resolved promise as a base case.
+	    var promises = [];
+	    // each result is a GCUR_DISTRICT row
+	    _.each(results, function(result) {
+	    	var res;
+	    	
+			var district = result;
+			var districtObjId = district.id;
+			var districtNo = district.get("DISTRICT");
+			var districtName = district.get("DIST_NAME");
+				
+			var SUSPENDED_STR = "suspended";
+				
+			var queryLocation = new Parse.Query("GCUR_LOCATION");
+			queryLocation.equalTo("DistrictNo", districtNo);
+			queryLocation.notEqualTo("LocationStatus", "suspended");
+			queryLocation.limit(1000);
+			queryLocation.ascending("LocationName");
+					
+			promises.push(queryLocation.find({
+				success : function(results) {
+					// results are JavaScript Array of GCUR_LOCATION objects
+							
+					var countOfLocations = results.length;
+
+					res = {
+						"districtObjId" : districtObjId,
+						"districtNo" : 	districtNo,
+						"districtName" : districtName,
+						"countOfLocations" : countOfLocations
+					};
+							
+					districtList.push(res);
+				},
+				error : function(error) {
+					return Parse.Promise.error("There was an error in finding GCUR_LOCATION.");
+				}
+			}));
+	    });
+	    // Return a new promise that is resolved when all of the promises are resolved
+	    return Parse.Promise.when(promises);
+	}).then(function() {
+	    response.success(districtList);
+	}, function(error) {
+		response.error("Error: " + error.code + " " + error.message);
+	});
 });
 
 Parse.Cloud.define("deleteCurrObservationForLocation", function(request, response) {
@@ -1715,53 +1828,55 @@ Parse.Cloud.define("deleteCurrObservationForLocation", function(request, respons
 });
 
 // Referenced by the observationDetails.jsp page object when action is "showObservationDetails"
-Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", async (request) => {
-	const locObjectId = request.params.locObjectId;
+Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", function(request, response) {
+	var locObjectId = request.params.locObjectId;
+	var locName = null;
 	
-	const queryLocation = new Parse.Query("GCUR_LOCATION");
+	var queryLocation = new Parse.Query("GCUR_LOCATION");
 	queryLocation.equalTo("objectId", locObjectId);
-	
-	const locResult = await queryLocation.first({ useMasterKey: true });
-
-	const location = locResult;		
-	const locName = location.get("LocationName");
-	const locStatus = location.get("LocationStatus");
+	queryLocation.first().then(function(result){
+		var location = result;		
+		locName = location.get("LocationName");
+		locStatus = location.get("LocationStatus");
 		
-	const queryObservation = new Parse.Query("GCUR_OBSERVATION");
-	queryObservation.equalTo("Location", location);	// By _Pointer
-	queryObservation.include("Observer");
-	queryObservation.include("Validator");
-	queryObservation.include("Administrator");
-	queryObservation.include("Location");
-	queryObservation.include("RateOfDrying");
-	queryObservation.limit(1000);
-	queryObservation.notEqualTo("ObservationStatus", 2);	// excludes the archived observation
-	queryObservation.ascending("ObservationStatus");	// this enables fetching current(0) and previous(1) observations
-	
-	const results = await queryObservation.find({ useMasterKey: true });
-	// results are JavaScript Array of GCUR_OBSERVATION objects
-	console.log("GCUR_OBSERVATION - find " + results.length + " records for GCUR_LOCATION " + locObjectId + ", " + locName);
-	
-	let returnedJSON = {
-		"locationObjId" : locObjectId,
-		"locationName" : locName,
-		"locationStatus" : locStatus
-	};
-	
-	if (results.length > 0) {
-		let currObservationObjectId, currObservationDate, currObserverObjectId, currObserverName;
-		let currPointCuring, currPointHeight, currPointCover, currPointFuelLoad, currAreaCuring, currAreaHeight, currAreaCover, currAreaFuelLoad, currRainfall, currRodObjectId, currComment, currUserFuelLoad, currFuelContinuity, currFuelQuantity;
-		let currValidationDate, currValidatorObjectId, currValidatorName, currValidatorCuring, currValidatorFuelLoad;
-		let currAdminDate, currAdminObjectId, currAdminName, currAdminCuring;
-		let prevObservationObjectId, prevPointCuring, prevPointHeight, prevPointCover, prevPointFuelLoad, prevAreaCuring, prevAreaHeight, prevAreaCover, prevAreaFuelLoad, prevRainfall, prevRodObjectId, prevUserFuelLoad, prevFuelContinuity, prevFuelQuantity;
-		let prevOpsCuring;	// in total 35 attributes
+		var queryObservation = new Parse.Query("GCUR_OBSERVATION");
+		queryObservation.equalTo("Location", location);	// By _Pointer
+		queryObservation.include("Observer");
+		queryObservation.include("Validator");
+		queryObservation.include("Administrator");
+		queryObservation.include("Location");
+		queryObservation.include("RateOfDrying");
+		queryObservation.limit(1000);
+		queryObservation.notEqualTo("ObservationStatus", 2);	// excludes the archived observation
+		queryObservation.ascending("ObservationStatus");	// this enables fetching current(0) and previous(1) observations
+		
+		return queryObservation.find({ useMasterKey: true });
+	}, function(error) {
+		response.error("GCUR_LOCATION table lookup failed");
+	}).then(function(results) {
+		// results are JavaScript Array of GCUR_OBSERVATION objects
+		console.log("GCUR_OBSERVATION - find " + results.length + " records for GCUR_LOCATION " + locObjectId);
+		
+		var returnedJSON = {
+				"locationObjId" : 	locObjectId,
+				"locationName" : locName,
+				"locationStatus" : locStatus
+		};
+				
+		if (results.length > 0) {
+			var currObservationObjectId, currObservationDate, currObserverObjectId, currObserverName;
+			var currPointCuring, currPointHeight, currPointCover, currPointFuelLoad, currAreaCuring, currAreaHeight, currAreaCover, currAreaFuelLoad, currRainfall, currRodObjectId, currComment, currUserFuelLoad, currFuelContinuity, currFuelQuantity;
+			var currValidationDate, currValidatorObjectId, currValidatorName, currValidatorCuring, currValidatorFuelLoad;
+			var currAdminDate, currAdminObjectId, currAdminName, currAdminCuring;
+			var prevObservationObjectId, prevPointCuring, prevPointHeight, prevPointCover, prevPointFuelLoad, prevAreaCuring, prevAreaHeight, prevAreaCover, prevAreaFuelLoad, prevRainfall, prevRodObjectId, prevUserFuelLoad, prevFuelContinuity, prevFuelQuantity;
+			var prevOpsCuring;	// in total 35 attributes
 			
-		// Only previous observation exists for the Location
-		if ((results.length == 1) && (results[0].get("ObservationStatus") == 1)) {
+			// Only previous observation exists for the Location
+			if ((results.length == 1) && (results[0].get("ObservationStatus") == 1)) {
 				// results[0] is GCUR_OBSERVATION for previous observation
 				
 				// check if FinalisedDate is 30 days away
-				let isPrevObsTooOld = isObsTooOld(results[0].get("FinalisedDate"));
+				var isPrevObsTooOld = isObsTooOld(results[0].get("FinalisedDate"));
 				if (!isPrevObsTooOld) {
 					prevObservationObjectId = results[0].id;
 					if (results[0].has("PointCuring"))
@@ -1789,7 +1904,7 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", async (request) =
 					if (results[0].has("Rainfall"))
 						prevRainfall = results[0].get("Rainfall");
 					if (results[0].has("RateOfDrying")) {
-						const prevRateOfDrying = results[0].get("RateOfDrying");
+						var prevRateOfDrying = results[0].get("RateOfDrying");
 						prevRodObjectId = prevRateOfDrying.id;
 					}
 					
@@ -1804,14 +1919,16 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", async (request) =
 					}
 					*/
 				}
-		} else {// current observation exists
+			} else {			
+				// current observation exists
+				
 				// Observer's current observation details
 				currObservationObjectId = results[0].id;
 				if (results[0].has("ObservationDate")) {
 					currObservationDate = results[0].get("ObservationDate");
 				}
 				if (results[0].has("Observer")) {
-					const observer = results[0].get("Observer");
+					var observer = results[0].get("Observer");
 					currObserverObjectId = observer.id;
 					//currObserverName = observer.get("username");
 					currObserverName = observer.get("firstName") + " " + observer.get("lastName");
@@ -1841,7 +1958,7 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", async (request) =
 				if (results[0].has("Rainfall"))
 					currRainfall = results[0].get("Rainfall");
 				if (results[0].has("RateOfDrying")) {
-					const currRateOfDrying = results[0].get("RateOfDrying");
+					var currRateOfDrying = results[0].get("RateOfDrying");
 					currRodObjectId = currRateOfDrying.id;
 				}
 				if (results[0].has("Comments"))
@@ -1851,7 +1968,7 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", async (request) =
 				if (results[0].has("ValidationDate"))
 					currValidationDate = results[0].get("ValidationDate");			
 				if (results[0].has("Validator")) {
-					const validator = results[0].get("Validator");
+					var validator = results[0].get("Validator");
 					currValidatorObjectId = validator.id;
 					currValidatorName = validator.get("username");
 				}
@@ -1864,7 +1981,7 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", async (request) =
 				if (results[0].has("AdminDate"))
 					currAdminDate = results[0].get("AdminDate");			
 				if (results[0].has("Administrator")) {
-					const administrator = results[0].get("Administrator");
+					var administrator = results[0].get("Administrator");
 					currAdminObjectId = administrator.id;
 					currAdminName = administrator.get("username");
 				}
@@ -1876,7 +1993,7 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", async (request) =
 					// results[1] is GCUR_OBSERVATION for previous observation
 					
 					// check if FinalisedDate is 30 days away
-					const isPrevObsTooOld = isObsTooOld(results[1].get("FinalisedDate"));
+					var isPrevObsTooOld = isObsTooOld(results[1].get("FinalisedDate"));
 					if (!isPrevObsTooOld) {
 						prevObservationObjectId = results[1].id;
 						if (results[1].has("PointCuring"))
@@ -1904,7 +2021,7 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", async (request) =
 						if (results[1].has("Rainfall"))
 							prevRainfall = results[1].get("Rainfall");
 						if (results[1].has("RateOfDrying")) {
-							const prevRateOfDrying = results[1].get("RateOfDrying");
+							var prevRateOfDrying = results[1].get("RateOfDrying");
 							prevRodObjectId = prevRateOfDrying.id;
 						}
 						
@@ -1920,7 +2037,7 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", async (request) =
 						*/
 					}
 				}
-		}
+			}
 			
 			// add additional observation attributes
 			/**
@@ -1932,7 +2049,7 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", async (request) =
 				var prevOpsCuring;
 			 */
 			
-		let currPrevObsDetails = {
+			var currPrevObsDetails = {
 					"currObservationObjectId" : currObservationObjectId,
 					"currObservationDate" : currObservationDate,
 					"currObserverObjectId" : currObserverObjectId,
@@ -1975,12 +2092,15 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", async (request) =
 					"prevRainfall" : prevRainfall,
 					"prevRodObjectId" : prevRodObjectId,
 					"prevOpsCuring" : prevOpsCuring
-		};
+			};
 						
-		returnedJSON["currPrevObsDetails"] = currPrevObsDetails;			
-	}
-
-	return returnedJSON;
+			returnedJSON["currPrevObsDetails"] = currPrevObsDetails;			
+		}
+		
+		response.success(returnedJSON);
+	}, function(error) {
+		response.error("GCUR_OBSERVATION table lookup failed");
+	});	 
 });
 
 Parse.Cloud.define("getAllFuelLoadLookupItems", function(request, response) {
@@ -2007,21 +2127,26 @@ Parse.Cloud.define("getAllFuelLoadLookupItems", function(request, response) {
 	});
 });
 
-Parse.Cloud.define("getAllAdjByLocDists", async (request) => {
-	const query = new Parse.Query("GCUR_ADJUST_LOCATION_LOOKUP_DIST");
+Parse.Cloud.define("getAllAdjByLocDists", function(request, response) {
+	var query = new Parse.Query("GCUR_ADJUST_LOCATION_LOOKUP_DIST");
 	query.limit(1000);
 	query.ascending("distance");
-	const returnedJSON = [];
-	const results = await query.find();
-	for (let i = 0; i < results.length; i++) {
-		//console.log(results[i].get("height") + " -" + results[i].get("cover") + " - " + results[i].get("fuel_load"));
-		const dist = {
-			"d" : results[i].get("distance")
-		};
-		
-		returnedJSON.push(dist);
-	}
-	return returnedJSON;
+	var returnedJSON = [];
+	
+	query.find().then(function(results) {
+		for (var i = 0; i < results.length; i++) {
+			//console.log(results[i].get("height") + " -" + results[i].get("cover") + " - " + results[i].get("fuel_load"));
+			var dist = {
+					"d" : results[i].get("distance")
+			};
+			
+			returnedJSON.push(dist);
+		}
+
+		response.success(returnedJSON);
+	}, function(error) {
+	      response.error("GCUR_ADJUST_LOCATION_LOOKUP_DIST lookup failed");
+	});
 });
 
 Parse.Cloud.define("getAllLocationsWithLinkedStatusForObservers", function(request, response) {
