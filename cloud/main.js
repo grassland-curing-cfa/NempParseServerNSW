@@ -1988,7 +1988,6 @@ Parse.Cloud.define("getAllFuelLoadLookupItems", async (request) => {
 	const results = await query.find();
 
 	for (var i = 0; i < results.length; i++) {
-		console.log("GCUR_LOOKUP_FUELLOAD: " + results[i].get("height") + " -" + results[i].get("cover") + " - " + results[i].get("fuel_load"));
 		const rod = {
 				"height" : results[i].get("height"),
 				"cover" : results[i].get("cover"),
@@ -2008,7 +2007,6 @@ Parse.Cloud.define("getAllAdjByLocDists", async (request) => {
 	const returnedJSON = [];
 	const results = await query.find();
 	for (let i = 0; i < results.length; i++) {
-		//console.log(results[i].get("height") + " -" + results[i].get("cover") + " - " + results[i].get("fuel_load"));
 		const dist = {
 			"d" : results[i].get("distance")
 		};
@@ -2018,6 +2016,9 @@ Parse.Cloud.define("getAllAdjByLocDists", async (request) => {
 	return returnedJSON;
 });
 
+/**
+ * Link an observer with locations page; called from the Link Observer with Locations page.
+ */
 Parse.Cloud.define("getAllLocationsWithLinkedStatusForObservers", function(request, response) {
 	var userObjectId = request.params.objectId;
 	var userName = null;
