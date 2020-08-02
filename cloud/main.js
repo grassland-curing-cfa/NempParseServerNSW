@@ -2153,9 +2153,9 @@ Parse.Cloud.define("updateLinkedLocsForObserverByIds", function(request, respons
 		        "mmrObjIds": mmrIds
 		};
 		
-		response.success(newCreatedMMRObjIds);
+		return newCreatedMMRObjIds;
 	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
+		throw new Error("Error: " + error.code + " " + error.message);
 	});
 });
 
