@@ -2019,75 +2019,66 @@ Parse.Cloud.define("getAllAdjByLocDists", async (request) => {
 /**
  * Link an observer with locations page; called from the Link Observer with Locations page.
  */
-Parse.Cloud.define("getAllLocationsWithLinkedStatusForObservers", function(request, response) {
-	var userObjectId = request.params.objectId;
-	var userName = null;
-	var firstName = null;
-	var lastName = null;
-	var allLocs = [];
+Parse.Cloud.define("getAllLocationsWithLinkedStatusForObservers", async (request) => {
+	const userObjectId = request.params.objectId;
+	const allLocs = [];
 	
-	var query = new Parse.Query("GCUR_LOCATION");
-	query.ascending("LocationName");
-	query.limit(1000);
-	query.find().then(function (locations) {
-		console.log("All locations count: " + locations.length);
-		for (var i = 0; i < locations.length; i++) {
-			var loc = {
-				"locationId" : locations[i].id,
-				"locationName" : locations[i].get("LocationName"),
-				"locationStatus" : locations[i].get("LocationStatus"),
-				"linked" : false
-			};
+	const queryLocation = new Parse.Query("GCUR_LOCATION");
+	queryLocation.ascending("LocationName");
+	queryLocation.limit(1000);
+	const locations = await queryLocation.find();
+
+	console.log("All locations count: " + locations.length);
+	for (let i = 0; i < locations.length; i++) {
+		const loc = {
+			"locationId" : locations[i].id,
+			"locationName" : locations[i].get("LocationName"),
+			"locationStatus" : locations[i].get("LocationStatus"),
+			"linked" : false
+		};
 			
-			allLocs.push(loc);
-		}		
-		
-		// Find the user
-		var queryUser = new Parse.Query(Parse.User);
-		queryUser.equalTo("objectId", userObjectId);
-		return queryUser.first({ useMasterKey: true });
-	}).then(function (user) {
-		  userName = user.get("username");
-		  firstName = user.get("firstName");
-		  lastName = user.get("lastName");
-		  console.log("userName - " + userName);
-		  var queryMMR = new Parse.Query("GCUR_MMR_OBSERVER_LOCATION");
-		  // Include the post data with each comment
-		  queryMMR.include("Observer");
-		  queryMMR.include("Location");
-		  queryMMR.limit(1000);
-		  return queryMMR.find({ useMasterKey: true });
-	}).then(function(results) {
-		  var locationsForUser = null;
-	      
-		  // Result is type of GCUR_MMR_OBSERVER_LOCATION class
-	      for (var i = 0; i < results.length; i++) {
-	        var user = results[i].get("Observer");
-	        var usrObjId = user.id;
-	        if (usrObjId == userObjectId) {
-	        	var location = results[i].get("Location");
+		allLocs.push(loc);
+	}
+
+	// Find the user
+	const queryUser = new Parse.Query(Parse.User);
+	queryUser.equalTo("objectId", userObjectId);
+	const user = await queryUser.first({ useMasterKey: true });
+	const userName = user.get("username");
+	const firstName = user.get("firstName");
+	const lastName = user.get("lastName");
+	console.log("userName - " + userName);
+
+	const queryMMR = new Parse.Query("GCUR_MMR_OBSERVER_LOCATION");
+	queryMMR.include("Observer");
+	queryMMR.include("Location");
+	queryMMR.limit(1000);
+	const mmrResults = await queryMMR.find({ useMasterKey: true });
+
+	for (let i = 0; i < mmrResults.length; i++) {
+		const user = mmrResults[i].get("Observer");
+	    const usrObjId = user.id;
+	    if (usrObjId == userObjectId) {
+	        const location = mmrResults[i].get("Location");
 	            
-	            for (var j = 0; j < allLocs.length; j++) {
-	            	if (allLocs[j]["locationId"] == location.id) {
-	            		allLocs[j]["linked"] = true;
-	            		break;
-	            	}
+	        for (let j = 0; j < allLocs.length; j++) {
+	            if (allLocs[j]["locationId"] == location.id) {
+	            	allLocs[j]["linked"] = true;
+	            	break;
 	            }
 	        }
-	      }
+	    }
+	}
 	      
-	      locationsForUser = {
-	        "userObjectId": userObjectId,
-	        "userName": userName,
-	        "firstName": firstName,
-	        "lastName": lastName,
-	        "locationList": allLocs
-	      };
-	      response.success(locationsForUser);
-	  }, function(error) {
-		  response.error("Error: " + error.code + " " + error.message);
-	  });
-	});
+	const locationsForUser = {
+	    "userObjectId": userObjectId,
+	    "userName": userName,
+	    "firstName": firstName,
+	    "lastName": lastName,
+	    "locationList": allLocs
+	};
+	return locationsForUser;
+});
 
 Parse.Cloud.define("updateLinkedLocsForObserverByIds", function(request, response) {
 	var observerObjId = request.params.observerObjId;	// String
