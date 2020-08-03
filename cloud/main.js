@@ -2368,12 +2368,12 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustDistrict", function(request, respo
 		}
 		
 		var createdAdjustDistrictIds = {
-		        "createdAdjustDistrictIds": newAdjustDistrictIds
+		    "createdAdjustDistrictIds": newAdjustDistrictIds
 		};
 		
-		response.success(createdAdjustDistrictIds);
+		return createdAdjustDistrictIds;
 	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
+		throw new Error("Error: " + error.code + " " + error.message);
 	});
 });
 
