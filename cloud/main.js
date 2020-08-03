@@ -2411,9 +2411,9 @@ Parse.Cloud.define("getAdjustedCuringForLocations", function(request, response) 
 			locAdjustedCuringList.push(locAdjustedCuringObj);
 		}
 	}).then(function() {
-	    response.success(locAdjustedCuringList);
+	    return locAdjustedCuringList;
 	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
+		throw new Error("Error: " + error.code + " " + error.message);
 	});
 	
 });
