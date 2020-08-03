@@ -2386,6 +2386,7 @@ Parse.Cloud.define("getAdjustedCuringForLocations", function(request, response) 
 	queryAdjustLoc.equalTo("status", status);		// status is user-specific, so it can be either current week or previous week
 	queryAdjustLoc.limit(1000);
 	queryAdjustLoc.include("location");
+	console.log("FLAG 0");
 	
 	queryAdjustLoc.find().then(function(results) {
 		for (var i = 0; i < results.length; i ++) {
@@ -2410,7 +2411,10 @@ Parse.Cloud.define("getAdjustedCuringForLocations", function(request, response) 
 			
 			locAdjustedCuringList.push(locAdjustedCuringObj);
 		}
+
+		console.log("FLAG 1");
 	}).then(function() {
+		console.log("FLAG 2");
 	    return locAdjustedCuringList;
 	}, function(error) {
 		throw new Error("Error: " + error.code + " " + error.message);
