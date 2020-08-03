@@ -2295,69 +2295,6 @@ Parse.Cloud.define("getAdjustedCuringForAllDistricts", async (request) => {
 	}
 
 	return distAdjustedCuringList;
-	/*
-	queryDistrict.find().then(function(results) {
-		// Create a trivial resolved promise as a base case.
-	    var promises = [];
-	    // each result is a GCUR_DISTRICT row
-	    _.each(results, function(result) {
-	    	var gcur_district = result;
-	    	var districtObjId = gcur_district.id;
-	    	var districtNo = gcur_district.get("DISTRICT");
-	    	var districtName = gcur_district.get("DIST_NAME");
-	    	
-	    	var distAdjustedCuringObj = null;
-	    	
-	    	var queryAdjustDistrict = new Parse.Query("GCUR_ADJUST_DISTRICT");
-	    	queryAdjustDistrict.ascending("district");
-	    	queryAdjustDistrict.equalTo("district", districtNo);
-	    	queryAdjustDistrict.equalTo("status", status);		// status is user-specific, so it can be either current week or previous week
-	    	queryAdjustDistrict.limit(1000);
-	    	
-	    	promises.push(queryAdjustDistrict.find({
-				success : function(results) {
-					// results are JavaScript Array of GCUR_ADJUST_DISTRICT objects;
-					// the length can only be either 0 or 1;
-					var thisDistrict, adjustedCuring, thisStatus, adjustDistrictObjId;
-					
-					if (results.length > 0) {
-						// The DISTRICT has an adjustedCuring and status record in GCUR_ADJUST_DISTRICT
-						adjustDistrictObjId = results[0].id;
-						thisDistrict = results[0].get("district");
-						adjustedCuring = results[0].get("adjustedCuring");
-						thisStatus = results[0].get("status");
-					} else {
-						// The DISTRICT does not have an adjustedCuring and status
-						adjustDistrictObjId = "";
-						thisDistrict = districtNo;
-						adjustedCuring = NULL_VAL_INT;
-						thisStatus = status;
-					}
-					
-					//
-					distAdjustedCuringObj = {
-						"adjustDistrictObjId": adjustDistrictObjId,
-						"districtNo": thisDistrict,
-						"districtName": districtName,
-						"adjustedCuring": adjustedCuring,
-						"status": thisStatus
-					};
-					distAdjustedCuringList.push(distAdjustedCuringObj);
-				},
-				error : function(error) {
-					return Parse.Promise.error("There was an error in finding GCUR_ADJUST_DISTRICTs.");
-				}
-			}));
-	    });
-	    
-	    // Return a new promise that is resolved when all of the promises are resolved
-	    return Parse.Promise.when(promises);
-	}).then(function() {
-	    response.success(distAdjustedCuringList);
-	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
-	});
-	*/
 });
 
 /**
