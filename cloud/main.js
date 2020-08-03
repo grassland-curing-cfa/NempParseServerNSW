@@ -2268,12 +2268,12 @@ Parse.Cloud.define("getAdjustedCuringForAllDistricts", async (request) => {
 		// the length can only be either 0 or 1;
 		let thisDistrict, adjustedCuring, thisStatus, adjustDistrictObjId;
 					
-		if (results.length > 0) {
+		if (adjustDistrctResults.length > 0) {
 			// The DISTRICT has an adjustedCuring and status record in GCUR_ADJUST_DISTRICT
-			adjustDistrictObjId = results[0].id;
-			thisDistrict = results[0].get("district");
-			adjustedCuring = results[0].get("adjustedCuring");
-			thisStatus = results[0].get("status");
+			adjustDistrictObjId = adjustDistrctResults[0].id;
+			thisDistrict = adjustDistrctResults[0].get("district");
+			adjustedCuring = adjustDistrctResults[0].get("adjustedCuring");
+			thisStatus = adjustDistrctResults[0].get("status");
 		} else {
 			// The DISTRICT does not have an adjustedCuring and status
 			adjustDistrictObjId = "";
@@ -2360,6 +2360,9 @@ Parse.Cloud.define("getAdjustedCuringForAllDistricts", async (request) => {
 	*/
 });
 
+/**
+ * Called from Submit click on saveAdjustByDistrictValues JS function on the adminTools.jsp page.
+ */
 Parse.Cloud.define("createUpdateCurrGCURAdjustDistrict", function(request, response) {
 	
 	/*
