@@ -2377,50 +2377,44 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustDistrict", function(request, respo
 	});
 });
 
-Parse.Cloud.define("getAdjustedCuringForLocations", function(request, response) {
-	var status = request.params.status;	// "status" = 0 (current), or = 1 (previous)
-	var locAdjustedCuringList = [];	// the output array for response
+Parse.Cloud.define("getAdjustedCuringForLocations", async (request) => {
+	const status = request.params.status;	// "status" = 0 (current), or = 1 (previous)
+	const locAdjustedCuringList = [];	// the output array for response
 
-	var queryAdjustLoc = new Parse.Query("GCUR_ADJUST_LOCATION");
+	const queryAdjustLoc = new Parse.Query("GCUR_ADJUST_LOCATION");
 	queryAdjustLoc.ascending("location");
 	queryAdjustLoc.equalTo("status", status);		// status is user-specific, so it can be either current week or previous week
 	queryAdjustLoc.limit(1000);
 	queryAdjustLoc.include("location");
 	console.log("FLAG 0");
-	
-	queryAdjustLoc.find().then(function(results) {
-		for (var i = 0; i < results.length; i ++) {
-			var adjustByLoc = results[i];
-			
-			var location = adjustByLoc.get("location");
-			var locationId = location.id;
-			var locationName = location.get("LocationName");
-			
-			var adjustedCuring = adjustByLoc.get("adjustedCuring");
-			
-			var adjustedDistance = adjustByLoc.get("adjustedDistance");
-			
-			//var status = adjustByLoc.get("status");
-			
-			locAdjustedCuringObj = {
-					"locObjId": locationId,
-					"locName": locationName,
-					"adjustedCuring": adjustedCuring,
-					"adjustedDistance": adjustedDistance
-			};
-			
-			locAdjustedCuringList.push(locAdjustedCuringObj);
-		}
 
-		console.log("FLAG 1");
-	}).then(function() {
-		console.log("FLAG 2");
-		console.log(locAdjustedCuringList);
-	    return locAdjustedCuringList;
-	}, function(error) {
-		throw new Error("Error: " + error.code + " " + error.message);
-	});
-	
+	const results = await queryAdjustLoc.find();
+	for (let i = 0; i < results.length; i ++) {
+		const adjustByLoc = results[i];
+		
+		const location = adjustByLoc.get("location");
+		const locationId = location.id;
+		const locationName = location.get("LocationName");
+		
+		const adjustedCuring = adjustByLoc.get("adjustedCuring");
+		
+		const adjustedDistance = adjustByLoc.get("adjustedDistance");
+		
+		//var status = adjustByLoc.get("status");
+		
+		const locAdjustedCuringObj = {
+				"locObjId": locationId,
+				"locName": locationName,
+				"adjustedCuring": adjustedCuring,
+				"adjustedDistance": adjustedDistance
+		};
+		
+		locAdjustedCuringList.push(locAdjustedCuringObj);
+	}
+
+	console.log("FLAG 1");
+	console.log(locAdjustedCuringList);
+	return locAdjustedCuringList;	
 });
 
 Parse.Cloud.define("createUpdateCurrGCURAdjustLocation", function(request, response) {
