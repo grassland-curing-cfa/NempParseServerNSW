@@ -2417,6 +2417,9 @@ Parse.Cloud.define("getAdjustedCuringForLocations", async (request) => {
 	return locAdjustedCuringList;	
 });
 
+/**
+ * Called from Submit click on saveAdjustByLocationValues JS function on the adminTools.jsp page.
+ */
 Parse.Cloud.define("createUpdateCurrGCURAdjustLocation", function(request, response) {
 	
 	/*
@@ -2491,12 +2494,12 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustLocation", function(request, respo
 		}
 		
 		var createdAdjustLocationIds = {
-				"createdAdjustLocationIds": newAdjustLocationIds
+			"createdAdjustLocationIds": newAdjustLocationIds
 		};
 		
-		response.success(createdAdjustLocationIds);
+		return createdAdjustLocationIds;
 	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
+		throw new Error("Error: " + error.code + " " + error.message);
 	});
 });
 
