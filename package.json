@@ -9,15 +9,6 @@
   },
   "license": "MIT",
   "dependencies": {
-    "express": "~4.11.x",
-    "kerberos": "~0.0.x",
-    "parse": "~1.8.0",
-    "parse-server": "*",
-    "underscore": "~1.8.3",
-    "mailgun-js": "^0.7.7",
-    "cors": "*",
-    "node-schedule": "~1.1.1",
-    "turf": "~3.0.14"
   },
   "scripts": {
     "start": "node index.js"
