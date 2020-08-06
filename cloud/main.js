@@ -1104,8 +1104,10 @@ Parse.Cloud.define("deleteRunModelById", function(request, response) {
 
 /**
  * Retrieve a list RunModel jobs by a list of ObjectIds
+ * Called by adminTools.jsp
+ * action=RefreshIncompleteRunModelJobsDetailsByAjax&objectIds=
  */
-Parse.Cloud.define("getRunModelDetails", function(request, response) {
+Parse.Cloud.define("getRunModelDetails", (request) => {
 	var inRunModelObjList = [];
 	var outRunModelDetails = [];
 	
@@ -1119,7 +1121,7 @@ Parse.Cloud.define("getRunModelDetails", function(request, response) {
 	queryRunModel.containedIn("objectId", inRunModelObjList);
 	queryRunModel.include("submittedBy");	// Retrieve _USER
 	queryRunModel.limit(1000);
-	queryRunModel.find({ useMasterKey: true }).then(function(results) {
+	return queryRunModel.find({ useMasterKey: true }).then(function(results) {
 		for (var j = 0; j < results.length; j ++) {
 			var objectId = results[j].id;
 			var createdAt = results[j].createdAt;
@@ -1150,9 +1152,9 @@ Parse.Cloud.define("getRunModelDetails", function(request, response) {
 	        
 	        outRunModelDetails.push(jobDetail);
 		}
-		return response.success(outRunModelDetails);
+		return outRunModelDetails;
 	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
+		throw new Error("Error: " + error.code + " " + error.message);
 	});
 });
 
