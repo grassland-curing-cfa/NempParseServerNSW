@@ -1044,32 +1044,28 @@ Parse.Cloud.beforeDelete("GCUR_RUNMODEL", function(request, response) {
 /**
  * Removes the associated viscaMapFile uploaded before the Finalise Model record is deleted
  */
-Parse.Cloud.beforeDelete("GCUR_FINALISEMODEL", function(request, response) {
+Parse.Cloud.beforeDelete("GCUR_FINALISEMODEL", async (request) => {
   // Checks if "viscaFile" has a value
   if (request.object.has("viscaMapFile")) {
 
-    var file = request.object.get("viscaMapFile");
-    var fileName = file.name();
-    console.log(file.name());
-    Parse.Cloud.httpRequest({
-      method: 'DELETE',
-      url: SERVER_URL + "/files/" + fileName,
-      headers: {
-        "X-Parse-Application-Id": APP_ID,
-        "X-Parse-Master-Key" : MASTER_KEY
-      },
-      success: function(httpResponse) {
-        console.log('Deleted the file associated with the GCUR_FINALISEMODEL job successfully.');
-        response.success();
-      },
-      error: function(httpResponse) {
-        console.error('Delete failed with response code ' + httpResponse.status + ':' + httpResponse.text);
-        response.error()
-      }
-    });
+    const file = request.object.get("viscaMapFile");
+    const fileName = file.name();
+	console.log(fileName);
+	
+	const httpResponse = await Parse.Cloud.httpRequest({
+		method: 'DELETE',
+		url: SERVER_URL + "/files/" + fileName,
+		headers: {
+			"X-Parse-Application-Id": APP_ID,
+        	"X-Parse-Master-Key" : MASTER_KEY
+	  }
+	}); 
+
+	console.log('Deleted the file associated with the GCUR_FINALISEMODEL job successfully. HttpResponse: ' + httpResponse.text);
+    return;
   } else {
     console.log('GCUR_FINALISEMODEL object to be deleted does not have an associated viscaMapFile (File). No viscaMapFile to be deleted.');
-    response.success();
+    return;
   }
 });
 
