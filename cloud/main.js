@@ -2735,7 +2735,7 @@ Parse.Cloud.define("getDataReport", function(request, response) {
 /**
  * Get the downloadable observation report based on user-specified finalised model objectId
  */
-Parse.Cloud.define("getDataReport", function(request, response) {
+Parse.Cloud.define("getDataReport", (request) => {
 	var finalisedModelObjectId = request.params.finalisedModelObjectId;
 	
 	var returnedObsList = [];
@@ -2755,7 +2755,7 @@ Parse.Cloud.define("getDataReport", function(request, response) {
 		promise = queryFinaliseModel.first();
 	}
 	
-	promise.then(function(val)  {
+	return promise.then(function(val)  {
 		var queryObservation = new Parse.Query("GCUR_OBSERVATION");
 		
 		// Export current obs
@@ -2852,9 +2852,9 @@ Parse.Cloud.define("getDataReport", function(request, response) {
 			returnedObsList.push(returnedObs);
 		}
 		
-	    response.success(returnedObsList);
+	    return returnedObsList;
 	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
+		throw new Error("Error: " + error.code + " " + error.message);
 	});
 });
 
