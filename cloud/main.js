@@ -2860,8 +2860,9 @@ Parse.Cloud.define("getDataReport", (request) => {
 
 /**
  * Retrieve the detail about a FinaliseModel object by its input objectId
+ * Called by adminTools.jsp action=RefreshIncompleteFinaliseModelJobDetailsByAjax&objectId=
  */
-Parse.Cloud.define("getFinaliseModelDetail", function(request, response) {
+Parse.Cloud.define("getFinaliseModelDetail", (request) => {
 	var inFinaliseModelObjId = null;
 	
 	console.log("Getting FinaliseModel Detail for ObjectId [" + request.params.finaliseModelObjId + "]");
@@ -2872,7 +2873,7 @@ Parse.Cloud.define("getFinaliseModelDetail", function(request, response) {
 	queryFinaliseModel.equalTo("objectId", inFinaliseModelObjId);
 	queryFinaliseModel.include("submittedBy");	// Retrieve _USER
 	queryFinaliseModel.limit(1000);
-	queryFinaliseModel.first({ useMasterKey: true }).then(function(finaliseModelJob) {
+	return queryFinaliseModel.first({ useMasterKey: true }).then(function(finaliseModelJob) {
 		var jobDetail = {};
 		
 		if (finaliseModelJob != undefined) {
@@ -2902,9 +2903,9 @@ Parse.Cloud.define("getFinaliseModelDetail", function(request, response) {
 		    };
 		}
 		
-		return response.success(jobDetail);
+		return jobDetail;
 	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
+		throw new Error("Error: " + error.code + " " + error.message);
 	});
 });
 
