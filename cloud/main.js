@@ -1062,10 +1062,10 @@ Parse.Cloud.beforeDelete("GCUR_FINALISEMODEL", async (request) => {
 	}); 
 
 	console.log('Deleted the file associated with the GCUR_FINALISEMODEL job successfully. HttpResponse: ' + httpResponse.text);
-    return "true";
+    return true;
   } else {
     console.log('GCUR_FINALISEMODEL object to be deleted does not have an associated viscaMapFile (File). No viscaMapFile to be deleted.');
-    return "false";
+    return false;
   }
 });
 
