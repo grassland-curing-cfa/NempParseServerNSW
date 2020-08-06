@@ -2746,7 +2746,7 @@ Parse.Cloud.define("getDataReport", (request) => {
 	
 	if (finalisedModelObjectId == "-9999") {
 		console.log("*** To export current observations at this point of time.");
-		promise = Parse.Promise.as(flagExportCurrObs);
+		promise = Promise.resolve(flagExportCurrObs);
 	} else {
 		console.log("*** To export previous finalised observations.");
 		var queryFinaliseModel = new Parse.Query("GCUR_FINALISEMODEL");
