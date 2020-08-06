@@ -23,6 +23,6 @@
     "start": "node index.js"
   },
   "engines": {
-    "node": ">=4.3"
+    "node": "6.12.*"
   }
 }
