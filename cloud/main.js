@@ -2908,6 +2908,7 @@ Parse.Cloud.define("getFinaliseModelDetail", (request) => {
 
 /**
  * Apply Validation By Exception if previous best curing reached 100%
+ * Triggered by the applyValidationByException function in \NEMP_GC\Parse_synch\NSW_New_Mig\synch.py
  */
 Parse.Cloud.define("applyValidationByException", function(request, response) {
 	var startTime = new Date().getTime();
@@ -2917,25 +2918,25 @@ Parse.Cloud.define("applyValidationByException", function(request, response) {
 	
 	// Check if the system setting "isValidationByException " is currently set "True";
 	var querySystemSettings = new Parse.Query("GCUR_SYSTEM_SETTINGS");
-	querySystemSettings.first().then(function(systemSettingRecord) {
+	return querySystemSettings.first().then(function(systemSettingRecord) {
 		try {
 			isValidationByException = systemSettingRecord.get("isValidationByException");
-			return Parse.Promise.as("isValidationByException is found!");
+			return Promise.resolve("isValidationByException is found!");
 		} catch (err) {
 			console.log("There was an error in getting 'isValidationByException'.");
-			return Parse.Promise.error("There was an error in getting 'isValidationByException'.");
+			return Promise.reject("There was an error in getting 'isValidationByException'.");
 		}
 	}, function(error) {
 		console.log("There was an error in finding GCUR_SYSTEM_SETTINGS.");
-		return Parse.Promise.error("There was an error in finding GCUR_SYSTEM_SETTINGS.");
+		return Promise.reject("There was an error in finding GCUR_SYSTEM_SETTINGS.");
 	}).then(function() {
 		console.log("isValidationByException = " + isValidationByException);
 		
 		if (isValidationByException) {
-			return Parse.Promise.as("To apply Validation By Exception rule!");
+			return Promise.resolve("To apply Validation By Exception rule!");
 		} else {
 			console.log("Not to applying Validation By Exception rule. Function stopped here.");
-			return Parse.Promise.error("Validation By Exception is currently set False.");
+			return Promise.reject("Validation By Exception is currently set False.");
 		}
 	}).then(function() {
 		console.log("Applying Validation By Exception rule... ...");
@@ -2978,17 +2979,9 @@ Parse.Cloud.define("applyValidationByException", function(request, response) {
 		prevLocsOnlyIds = inAButNotInB(prevLocIds, currLocIds);
 		console.log(prevLocsOnlyIds.length + " locations that do not exist in current week but in previous week.");
 		
-		//console.log("prevObs count: " + prevObs.length);
-		//console.log("prevLocIds count: " + prevLocIds.length);
-		//console.log("currLocIds count: " + currLocIds.length);
-		
 		var currObsListToBeSaved = [];	// array for the GCUR_OBSERVATION objects to be saved to the GCUR_OBSERVATION table by the rule!
 
-		for (var j = 0; j < prevLocsOnlyIds.length; j++) {
-			var currAreaCuring;
-			var currValidatorCuring;
-			var currAdminCuring;
-			
+		for (var j = 0; j < prevLocsOnlyIds.length; j++) {			
 			for (var k = 0; k < prevObsList.length; k++) {
 				var prevObs = prevObsList[k];
 				
@@ -3063,9 +3056,7 @@ Parse.Cloud.define("applyValidationByException", function(request, response) {
 			}
 		}
 		
-		return Parse.Object.saveAll(currObsListToBeSaved);
-		
-		//response.success(true);
+		return Parse.Object.saveAll(currObsListToBeSaved, { useMasterKey: true });
 	}).then(function(objectList) {
 		// all the objects were saved.
 		var createdNewObsIds = [];
@@ -3075,15 +3066,15 @@ Parse.Cloud.define("applyValidationByException", function(request, response) {
 		}
 		
 		var createdNewObsIdList = {
-		        "createdNewObsIds": createdNewObsIds
+		    "createdNewObsIds": createdNewObsIds
 		};
 		
 		console.log("Validation By Exception rule applied; New GCUR_OBSERVATION object count = " + countOfObsApplied);
 		console.log("The execution time for 'applyValidationByException' = " + (new Date().getTime() - startTime)/1000);
 		
-		response.success(createdNewObsIdList);
+		return createdNewObsIdList;
 	}, function(error) {
-		response.error("Error: " + error);
+		throw new Parse.Error(1001, 'Error on applyValidationByException: ' + error.toString());
 	});
 });
 
