@@ -3079,9 +3079,10 @@ Parse.Cloud.define("applyValidationByException", function(request, response) {
 });
 
 /**
-Automate RunModel by adding a RunModel given defined creteria.
+ * Automate RunModel by adding a RunModel given defined creteria.
+ * Triggered by automated_run_model.py
 */
-Parse.Cloud.define("automateRunModel", function(request, response) {
+Parse.Cloud.define("automateRunModel", (request) => {
 	var executionResult = false;
 	var executionMsg = "";
 	var isJobAdded = false;
@@ -3099,7 +3100,7 @@ Parse.Cloud.define("automateRunModel", function(request, response) {
 	
 	var queryRunModel = new Parse.Query("GCUR_RUNMODEL");
 	queryRunModel.greaterThan("createdAt", greaterThanDt);
-	queryRunModel.find().then(function(results) {
+	return queryRunModel.find().then(function(results) {
 		
 		switch (results.length) {
 		
@@ -3214,7 +3215,7 @@ Parse.Cloud.define("automateRunModel", function(request, response) {
 				}
 		}
 		
-		return Parse.Promise.as("Current RunModel jobs have been checked. Continue... ...");		
+		return Promise.resolve("Current RunModel jobs have been checked. Continue... ...");
 	}).then(function() {
 		// Save a new RunModel job based on ResToCreate
 		if (ToCreate) {
@@ -3225,12 +3226,16 @@ Parse.Cloud.define("automateRunModel", function(request, response) {
 			var admin = new Parse.User();
 			admin.id = SUPERUSER_OBJECTID;
 			
-			newRMJob.save({
+			return newRMJob.save({
 				status: 0,
 				resolution: ResToCreate,
 				jobResult: false,
 				submittedBy: admin
-			}, {
+			}, { useMasterKey: true });
+			
+			
+			/*
+			{
 				useMasterKey: true,
 			
 				success: function(obj) {
@@ -3248,22 +3253,21 @@ Parse.Cloud.define("automateRunModel", function(request, response) {
 					response.error({"ToCreate": ToCreate, "ResToCreate": ResToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded});
 				}
 			});
+			*/
 		} else
-			response.success({"ToCreate": ToCreate, "ResToCreate": ResToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded});
+			//response.success({"ToCreate": ToCreate, "ResToCreate": ResToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded});
+			return Promise.resolve({"ToCreate": ToCreate, "ResToCreate": ResToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded});		
+	}).then(function(obj) {
+		// The save was successful.
+		isJobAdded = true;
+		executionMsg += "A new RunModel job with resolution of " + ResToCreate + " has been successfully saved. "
+		console.log(executionMsg);
+		return {"ToCreate": ToCreate, "ResToCreate": ResToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded};
 	}, function(error) {
-		// An error occurred while deleting one or more of the objects.
-		// If this is an aggregate error, then we can inspect each error
-		// object individually to determine the reason why a particular
-		// object was not deleted.
-	    if (error.code === Parse.Error.AGGREGATE_ERROR) {
-	    	for (var i = 0; i < error.errors.length; i++) {
-	          console.log("Couldn't delete " + error.errors[i].object.id +
-	            "due to " + error.errors[i].message);
-	        }
-	    } else {
-	    	console.log("Delete aborted because of " + error.message);
-	    }
-		response.success(false);
+		// The save failed.  Error is an instance of Parse.Error.
+		executionMsg += "There was an error in saving a new RunModel job with resolution of " + ResToCreate;
+		console.log(executionMsg);
+		throw new Parse.Error(1001, {"ToCreate": ToCreate, "ResToCreate": ResToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded});
 	});
 });
 
