@@ -113,7 +113,7 @@ var validationRequestEmailHtml = '<!DOCTYPE html><html>' +
 			'</body>' + 
 			'</html>';
 
-Parse.Cloud.define("sendEmailRequestForValidation", function(request, response) {
+Parse.Cloud.define("sendEmailRequestForValidation", (request) => {
 	console.log('Function [sendEmailRequestForValidation] being executed...');
 
 	if (_IS_FIRE_DANGER_PERIOD) {
@@ -133,16 +133,16 @@ Parse.Cloud.define("sendEmailRequestForValidation", function(request, response) 
 		mailgun.messages().send(data, function (error, body) {
 			if (error) {
 				console.log(error);
-				response.error("" + error);
+				throw new Error("" + error);
 			}
 			else {
 				console.log(body);
-				response.success(body);
+				return "" + body;
 			}
 		});
 	}
 	else
-		response.success("_IS_FIRE_DANGER_PERIOD: " + _IS_FIRE_DANGER_PERIOD + "; No RequestForValidation email to be sent.");
+		return "_IS_FIRE_DANGER_PERIOD: " + _IS_FIRE_DANGER_PERIOD + "; No RequestForValidation email to be sent.";
 });
  
 // Send a "Want to become an observer" email via Mailgun
