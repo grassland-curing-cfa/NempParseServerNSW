@@ -146,19 +146,19 @@ Parse.Cloud.define("sendEmailRequestForValidation", (request) => {
 });
  
 // Send a "Want to become an observer" email via Mailgun
-Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) {
-    var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
+Parse.Cloud.define("sendEmailWantToBecomeObserver", async (request) => {
+    const mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
      
-    var firstname = request.params.fn;
-    var lastname = request.params.ln;
-    var email = request.params.em;
-    var address = request.params.addr;
-    var suburb = request.params.sub;
-    var state = request.params.st;
-    var postcode = request.params.pc;
+    const firstname = request.params.fn;
+    const lastname = request.params.ln;
+    const email = request.params.em;
+    const address = request.params.addr;
+    const suburb = request.params.sub;
+    const state = request.params.st;
+    const postcode = request.params.pc;
      
     // the email body HTML template to RFS staff
-    var html1 = '<!DOCTYPE html><html>' +
+    const html1 = '<!DOCTYPE html><html>' +
     '<body>' + 
     'Hello RFS Fire Behaviour Analysis Team,' + 
     '<p>' + '<strong>' + firstname + ' ' +  lastname + '</strong> (<a href="mailto:' + email + '">' + email + '</a>) has shown interest to become an observer. The following contact details have also been provided on the Portal:</p>' + 
@@ -175,7 +175,7 @@ Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) 
     '</html>';
      
     // the email body HTML template to who registered interest to become an observer
-    var html2 = '<!DOCTYPE html><html>' +
+    const html2 = '<!DOCTYPE html><html>' +
     '<body>' + 
     'Welcome to ' + process.env.APP_NAME + '.' + 
     '<p>A NSW RFS member will sign you up to our online Portal. Once you have been added to the Portal, you will receive an automatic email to verify your email address before you can access the online portal.</p>' + 
@@ -190,33 +190,25 @@ Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) 
     '</body>' + 
     '</html>';
 
-    mailgun.messages().send({
+    const sentFeedback1 = await mailgun.messages().send({
       from: CFA_NEMP_EMAIL,
       to: RFS_FBA,
       bcc: CFA_NEMP_EMAIL,
       subject: "Express of Interest to become a grassland curing observer",
       text: '',
       html: html1
-    }, function (error, body) {
-      if (error)
-        response.error("" + error);    
-      else
-        response.success(body);
     });
 
-    mailgun.messages().send({
+    const sentFeedback2 = await mailgun.messages().send({
       from: RFS_FBA,
       to: email,
       bcc: CFA_NEMP_EMAIL,
       subject: "Welcome to " + process.env.APP_NAME,
       text: '',
       html: html2
-    }, function (error, body) {
-      if (error)
-        response.error("" + error);    
-      else
-        response.success(body);
-    });
+	});
+	
+	return sentFeedback1 + ". " + sentFeedback2;
 });
  
 //Send a "Welcome email to new user upon signed-up" via Mailgun
