@@ -406,7 +406,7 @@ Parse.Cloud.define("isLocationNameExist", async (request) => {
 Parse.Cloud.define("deleteUserByUsername", (request) => {
 	var username = request.params.username;
 	
-	// Check if the username exists before it gets deleted
+	// Check if the username exists before it is deleted
 	var queryUser = new Parse.Query(Parse.User);
 	queryUser.equalTo("username", username);
 	queryUser.limit(1000);
