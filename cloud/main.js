@@ -415,7 +415,7 @@ Parse.Cloud.define("deleteUserByUsername", (request) => {
 		return Parse.Object.destroyAll(results);
 	}, function(error) {
 		console.log("_USER table lookup failed");
-	    return false;
+		return false;
 	}).then(function() {
 		console.log('_USER record [' + username + '] successfully deleted.');
 		return true;
