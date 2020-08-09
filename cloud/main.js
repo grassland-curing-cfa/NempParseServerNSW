@@ -703,7 +703,7 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", async (request) => {
  * Retrieve previous curing values (shared only!) for shared locations for State
  * This Cloud function is called from the VISCA model directly!
  */
-Parse.Cloud.define("getSharedPrevCuringForStateForInputToVISCA", function(request, response) {
+Parse.Cloud.define("getSharedPrevCuringForStateForInputToVISCA", (request) => {
 	var stateName = request.params.state;
 	
 	var isBufferZonePntsForStateApplied = true;
@@ -716,16 +716,16 @@ Parse.Cloud.define("getSharedPrevCuringForStateForInputToVISCA", function(reques
 
 	// Find the "bufferZonePnts" for the input jurisdiction
 	// "bufferZonePnts" can be either the set point array, or "null" or "undefined" as well.
-	querySharedJurisSettings.first().then(function(jurisSetting) {
+	return querySharedJurisSettings.first().then(function(jurisSetting) {
 		bufferZonePntsForState = jurisSetting.get("bufferZonePnts");
 			
 		if ((bufferZonePntsForState == null) || (bufferZonePntsForState == undefined))
 			isBufferZonePntsForStateApplied = false;
 			
-		return Parse.Promise.as("'bufferZonePnts' is found for jurisdiction " + stateName);
+		return Promise.resolve("'bufferZonePnts' is found for jurisdiction " + stateName);
 	}, function(error) {
 		console.log("There was an error in finding Class 'GCUR_SHARED_JURIS_SETTINGS', but we continue to find previous observations.");
-		return Parse.Promise.as("There was an error in finding Class 'GCUR_SHARED_JURIS_SETTINGS', but we continue to find previous observations.");
+		return Promise.resolve("There was an error in finding Class 'GCUR_SHARED_JURIS_SETTINGS', but we continue to find previous observations.");
 	}).then(function() {
 		console.log("isBufferZonePntsForStateApplied = " + isBufferZonePntsForStateApplied + " for " + stateName);
 	
@@ -869,9 +869,9 @@ Parse.Cloud.define("getSharedPrevCuringForStateForInputToVISCA", function(reques
 			};
 		}
 		
-		return response.success(returnedObj);
+		return returnedObj;
 	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
+		throw new Error("Error: " + error.code + " " + error.message);
 	});
 });
 
