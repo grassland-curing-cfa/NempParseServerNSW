@@ -192,7 +192,8 @@ Parse.Cloud.define("sendEmailWantToBecomeObserver", async (request) => {
 
     const sentFeedback1 = await mailgun.messages().send({
       from: CFA_NEMP_EMAIL,
-      to: RFS_FBA,
+	  //to: RFS_FBA,
+	  to: "alex.tao.chen@gmail.com",
       bcc: CFA_NEMP_EMAIL,
       subject: "Express of Interest to become a grassland curing observer",
       text: '',
