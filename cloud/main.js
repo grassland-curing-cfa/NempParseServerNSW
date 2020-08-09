@@ -1620,7 +1620,7 @@ Parse.Cloud.define("getObsForInputToVISCA", (request) => {
 			// Sort by locName, case-insensitive, A-Z
 			obsList.sort(sort_by('locName', false, function(a){return a.toUpperCase()}));
 		}
-		
+
 		return Promise.resolve("okay");
 	}).then(function() {
 	    return obsList;
@@ -1667,13 +1667,13 @@ Parse.Cloud.define("getCountOfLocsForDistricts", async (request) => {
 	return districtList;
 });
 
-Parse.Cloud.define("deleteCurrObservationForLocation", function(request, response) {
+Parse.Cloud.define("deleteCurrObservationForLocation", (request) => {
 	var locObjectId = request.params.locObjectId;
 	var locName = null;
 	
 	var queryLocation = new Parse.Query("GCUR_LOCATION");
 	queryLocation.equalTo("objectId", locObjectId);
-	queryLocation.first().then(function(gloc) {
+	return queryLocation.first().then(function(gloc) {
 		locName = gloc.get("LocationName");
 		
 		var queryObservation = new Parse.Query("GCUR_OBSERVATION");
@@ -1682,18 +1682,18 @@ Parse.Cloud.define("deleteCurrObservationForLocation", function(request, respons
 		
 		return queryObservation.find();
 	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
+		throw new Error("Error: " + error.code + " " + error.message);
 	}).then(function(observations) {
 		// If no observation was found.
 		if (observations.length == 0) {
-			return Parse.Promise.error("There was no current observation record for location " + locObjectId + " - " + locName);
+			return Promise.reject("There was no current observation record for location " + locObjectId + " - " + locName);
 		}
 		return Parse.Object.destroyAll(observations);
 	}).then(function() {
 		console.log('Current GCUR_OBSERVATION records for location ' + locName + ' have been successfully deleted.');
-		return response.success(true);
+		return true;
 	}, function(error) {
-		response.error(error);
+		throw new Error(error);
 	});
 });
 
