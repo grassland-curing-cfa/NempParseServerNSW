@@ -349,14 +349,14 @@ Parse.Cloud.define("exportEmailsForActiveUsers", (request) => {
 });
 
 // export a list of email addresses for all activated validators and admins
-Parse.Cloud.define("exportAllValAdminEmails", function(request, response) {
+Parse.Cloud.define("exportAllValAdminEmails", (request) => {
 	var recipientList = "";
 	
 	var queryMMR = new Parse.Query("GCUR_MMR_USER_ROLE");
 	queryMMR.include("user");
 	queryMMR.include("role");
 	queryMMR.limit(1000);
-	queryMMR.find({ useMasterKey: true }).then(function(results) {
+	return queryMMR.find({ useMasterKey: true }).then(function(results) {
 		// results is array of GCUR_MMR_USER_ROLE records
 		for (var i = 0; i < results.length; i++) {
 			var role = results[i].get("role");
@@ -373,9 +373,9 @@ Parse.Cloud.define("exportAllValAdminEmails", function(request, response) {
 					console.log(role.get("name") + " - Email [" + email + "] already added in recipientList.");
 			}
 		}
-		response.success(recipientList);	
+		return recipientList;	
 	}, function(error) {
-	    response.error("GCUR_MMR_USER_ROLE table lookup failed");
+	    throw new Error("GCUR_MMR_USER_ROLE table lookup failed");
 	});
 });
 
