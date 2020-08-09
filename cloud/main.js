@@ -269,32 +269,33 @@ Parse.Cloud.define("sendEmailWelcomeNewUser", (request) => {
 })
  
 //Send an email via Mailgun with finalised curing map to FBA
-Parse.Cloud.define("sendEmailFinalisedDataToObservers", (request) => {
+Parse.Cloud.define("sendEmailFinalisedDataToObservers", async (request) => {
     // get all active observers
     var recipientList = "";
      
-    var queryMMR = new Parse.Query("GCUR_MMR_USER_ROLE");
+    const queryMMR = new Parse.Query("GCUR_MMR_USER_ROLE");
     queryMMR.include("user");
     queryMMR.include("role");
     queryMMR.limit(1000);
-    return queryMMR.find({ useMasterKey: true }).then(function(results) {
+    const results = await queryMMR.find({ useMasterKey: true });
         // results is array of GCUR_MMR_USER_ROLE records
-        for (var i = 0; i < results.length; i++) {
-            var role = results[i].get("role");
-            var status = results[i].get("status");
-            if (status && (role.get("name") == "Observers")) {
-                var user = results[i].get("user");
-                var email = user.get("email");
-                recipientList = recipientList + email + ";";
-            }
+	
+	for (let i = 0; i < results.length; i++) {
+        const role = results[i].get("role");
+        const status = results[i].get("status");
+        if (status && (role.get("name") == "Observers")) {
+            const user = results[i].get("user");
+            const email = user.get("email");
+            recipientList = recipientList + email + ";";
         }
+	}
          
-        // use Mailgun to send email
-        var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
+    // use Mailgun to send email
+    const mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
          
-        var strToday = getTodayString(_IS_DAYLIGHT_SAVING);
+    const strToday = getTodayString(_IS_DAYLIGHT_SAVING);
          
-        var html = '<!DOCTYPE html><html>' +
+    const html = '<!DOCTYPE html><html>' +
         '<body>' + 
         'Hello all,' + 
         '<p>The NSW grassland curing map has been updated for the ' + strToday + '. To view the map, please click <a href="' + GAE_APP_URL + '/viscaModel?action=grasslandCuringMap">here</a>.</p>' + 
@@ -304,25 +305,17 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", (request) => {
         '</body>' + 
         '</html>';
 
-        mailgun.messages().send({
-          from: RFS_FBA,
-          //to: RFS_FBA + ";" + process.env.ADDITIONAL_EMAILS_FOR_FINALISED_MAP,
-		  //bcc: CFA_NEMP_EMAIL + ";" + CFA_GL_EMAIL + ";" + CFA_GL_TEAM_EMAIL,
-		  to: "alex.tao.chen@gmail.com",
-          subject: "New South Wales Grassland Curing Map - " + strToday,
-          text: '',
-          html: html
-        }, function (error, body) {
-          if (error)
-            throw new Error("" + error);    
-          else
-            return "Email sent. Details: " + JSON.stringify(body);
-        });
-
-        //response.success(emailList);  
-    }, function(error) {
-        throw new Error("GCUR_MMR_USER_ROLE table lookup failed");
-    });
+    const sentFeedback = await mailgun.messages().send({
+        from: RFS_FBA,
+        //to: RFS_FBA + ";" + process.env.ADDITIONAL_EMAILS_FOR_FINALISED_MAP,
+		//bcc: CFA_NEMP_EMAIL + ";" + CFA_GL_EMAIL + ";" + CFA_GL_TEAM_EMAIL,
+		to: "alex.tao.chen@gmail.com",
+        subject: "New South Wales Grassland Curing Map - " + strToday,
+        text: '',
+        html: html
+	});
+	
+	return JSON.stringify(sentFeedback);
 });
 
 //export a list of email addresses for all active users
