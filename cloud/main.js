@@ -130,7 +130,7 @@ Parse.Cloud.define("sendEmailRequestForValidation", (request) => {
 			html: validationRequestEmailHtml
 		};
 
-		mailgun.messages().send(data, function (error, body) {
+		return mailgun.messages().send(data, function (error, body) {
 			if (error) {
 				console.log(error);
 				throw new Error("" + error);
