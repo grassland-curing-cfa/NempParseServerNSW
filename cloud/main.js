@@ -209,7 +209,7 @@ Parse.Cloud.define("sendEmailWantToBecomeObserver", async (request) => {
       html: html2
 	});
 	
-	return sentFeedback1 + ". " + sentFeedback2;
+	return sentFeedback1.stringify() + ". " + sentFeedback2.stringify();
 });
  
 //Send a "Welcome email to new user upon signed-up" via Mailgun
