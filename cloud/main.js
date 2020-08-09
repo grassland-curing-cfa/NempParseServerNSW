@@ -14,8 +14,6 @@
               				11/07/2018: Created two cloud functions: "automateRunModel" & "automateFinaliseData" on the Parse Server for automating RunModel and FinaliseData jobs
 							13/11/2018: Updated the getDataReport function to allow exporting current observations at any point of time
 							30/06/2020: Started to upgrade all Cloud functions to Parse-server 3.
-							06/07/2020: Upgraded getAllSimpleMMRUserRoleForUser, getCountOfLocsForDistricts, getSimpleObservationsForUser
-							07/07/2020: Upgraded getCurrPrevSimpleObservationsForLocation, 
  */
 
 var _ = require('underscore');
