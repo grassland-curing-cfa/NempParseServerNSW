@@ -262,14 +262,14 @@ Parse.Cloud.define("sendEmailWelcomeNewUser", (request) => {
       html: html
     }, function (error, body) {
       if (error)
-        return new Error("" + error);    
+        throw new Error("" + error);    
       else
         return JSON.stringify(body);
     });
 })
  
 //Send an email via Mailgun with finalised curing map to FBA
-Parse.Cloud.define("sendEmailFinalisedDataToObservers", function(request, response) {
+Parse.Cloud.define("sendEmailFinalisedDataToObservers", (request) => {
     // get all active observers
     var recipientList = "";
      
@@ -277,7 +277,7 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", function(request, respon
     queryMMR.include("user");
     queryMMR.include("role");
     queryMMR.limit(1000);
-    queryMMR.find({ useMasterKey: true }).then(function(results) {
+    return queryMMR.find({ useMasterKey: true }).then(function(results) {
         // results is array of GCUR_MMR_USER_ROLE records
         for (var i = 0; i < results.length; i++) {
             var role = results[i].get("role");
@@ -306,21 +306,22 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", function(request, respon
 
         mailgun.messages().send({
           from: RFS_FBA,
-          to: RFS_FBA + ";" + process.env.ADDITIONAL_EMAILS_FOR_FINALISED_MAP,
-          bcc: CFA_NEMP_EMAIL + ";" + CFA_GL_EMAIL + ";" + CFA_GL_TEAM_EMAIL,
+          //to: RFS_FBA + ";" + process.env.ADDITIONAL_EMAILS_FOR_FINALISED_MAP,
+		  //bcc: CFA_NEMP_EMAIL + ";" + CFA_GL_EMAIL + ";" + CFA_GL_TEAM_EMAIL,
+		  to: "alex.tao.chen@gmail.com",
           subject: "New South Wales Grassland Curing Map - " + strToday,
           text: '',
           html: html
         }, function (error, body) {
           if (error)
-            response.error("" + error);    
+            throw new Error("" + error);    
           else
-            response.success("Email sent. Details: " + JSON.stringify(body));
+            return "Email sent. Details: " + JSON.stringify(body);
         });
 
         //response.success(emailList);  
     }, function(error) {
-        response.error("GCUR_MMR_USER_ROLE table lookup failed");
+        throw new Error("GCUR_MMR_USER_ROLE table lookup failed");
     });
 });
 
