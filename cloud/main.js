@@ -3272,9 +3272,10 @@ Parse.Cloud.define("automateRunModel", (request) => {
 });
 
 /**
-Automate FinaliseData by adding a FinaliseData given defined creteria.
-*/
-Parse.Cloud.define("automateFinaliseData", function(request, response) {
+ * Automate FinaliseData by adding a FinaliseData given defined creteria.
+ * Triggered by automated_finalise_data.py
+ */
+Parse.Cloud.define("automateFinaliseData", (request) => {
 	var executionResult = false;
 	var executionMsg = "";
 	var isJobAdded = false;
@@ -3294,7 +3295,7 @@ Parse.Cloud.define("automateFinaliseData", function(request, response) {
 	// This is for double check to be more secure that we are not adding a FinaliseData job if RunModels were not successful.
 	var queryRunModel = new Parse.Query("GCUR_RUNMODEL");
 	queryRunModel.greaterThan("createdAt", greaterThanDt);
-	queryRunModel.find().then(function(results) {
+	return queryRunModel.find().then(function(results) {
 		
 		switch (results.length) {
 		
@@ -3377,9 +3378,9 @@ Parse.Cloud.define("automateFinaliseData", function(request, response) {
 		console.log(executionMsg);
 		
 		if (isRunModelsSuccessful) {
-			return Parse.Promise.as("isRunModelsSuccessful is true!");
+			return Promise.resolve("isRunModelsSuccessful is true!");
 		} else {
-			return Parse.Promise.error("isRunModelsSuccessful is false!");	// Go straight to the error callback at the end
+			return Promise.reject("isRunModelsSuccessful is false!");	// Go straight to the error callback at the end
 		}		
 	}).then(function() {	
 		var queryFinaliseData = new Parse.Query("GCUR_FINALISEMODEL");
@@ -3425,7 +3426,7 @@ Parse.Cloud.define("automateFinaliseData", function(request, response) {
 					console.log(executionMsg);
 		}
 			
-		return Parse.Promise.as("Current FinaliseData jobs have been checked. Continue... ...");		
+		return Promise.resolve("Current FinaliseData jobs have been checked. Continue... ...");		
 	}).then(function() {
 		// Save a new FinalisedData job based on ResToCreate
 		if (ToCreate) {
@@ -3436,12 +3437,14 @@ Parse.Cloud.define("automateFinaliseData", function(request, response) {
 			var admin = new Parse.User();
 			admin.id = SUPERUSER_OBJECTID;
 			
-			newFDJob.save({
+			return newFDJob.save({
 				status: 0,
 				jobResult: false,
 				submittedBy: admin
-			}, {
-				useMasterKey: true,
+			}, { useMasterKey: true });
+
+
+				/*
 			
 				success: function(obj) {
 					// The save was successful.
@@ -3457,11 +3460,18 @@ Parse.Cloud.define("automateFinaliseData", function(request, response) {
 					console.log(executionMsg);
 					response.error({"ToCreate": ToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded, 'error': error});
 				}
-			});
+				*/
+			
 		} else
-			response.success({"ToCreate": ToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded});
+			return Promise.resolve({"ToCreate": ToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded});
+	}).then(function(obj) {
+		// The save was successful.
+		isJobAdded = true;
+		executionMsg += "A new FinalisedData job has been successfully saved. "
+		console.log(executionMsg);
+		return {"ToCreate": ToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded};
 	}, function(error) {
-		response.error({"ToCreate": ToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded, 'error': error});
+		throw new Parse.Error(1001, {"ToCreate": ToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded, 'error': error});
 	});
 });
 
