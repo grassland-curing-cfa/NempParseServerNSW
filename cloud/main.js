@@ -1540,7 +1540,7 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 	return obsList;
 });
 
-Parse.Cloud.define("getObsForInputToVISCA", function(request, response) {
+Parse.Cloud.define("getObsForInputToVISCA", (request) => {
 	var obsList = [];	// the output array for response
 	
 	/*
@@ -1552,7 +1552,7 @@ Parse.Cloud.define("getObsForInputToVISCA", function(request, response) {
 	queryObservation.equalTo("ObservationStatus", 0);			// Current week's observations
 	queryObservation.limit(1000);
 	queryObservation.include("Location");
-	queryObservation.find().then(function(results) {
+	return queryObservation.find().then(function(results) {
 		
 		for (var i = 0; i < results.length; i ++) {
 			var locObjId = locName = locLat = locLng = undefined;
@@ -1621,10 +1621,11 @@ Parse.Cloud.define("getObsForInputToVISCA", function(request, response) {
 			obsList.sort(sort_by('locName', false, function(a){return a.toUpperCase()}));
 		}
 		
+		return Promise.resolve("okay");
 	}).then(function() {
-	    response.success(obsList);
+	    return obsList;
 	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
+		throw new Error("Error: " + error.code + " " + error.message);
 	});
 });
 
