@@ -142,7 +142,7 @@ Parse.Cloud.define("sendEmailRequestForValidation", (request) => {
 		});
 	}
 	else
-		return "_IS_FIRE_DANGER_PERIOD: " + _IS_FIRE_DANGER_PERIOD + "; No RequestForValidation email to be sent.";
+		return Promise.resolve("_IS_FIRE_DANGER_PERIOD: " + _IS_FIRE_DANGER_PERIOD + "; No RequestForValidation email to be sent.");
 });
  
 // Send a "Want to become an observer" email via Mailgun
