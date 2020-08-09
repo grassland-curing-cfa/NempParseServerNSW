@@ -499,7 +499,7 @@ Parse.Cloud.afterSave("GCUR_OBSERVATION", async (request) => {
 /*
  * after a new Location is added
  */
-Parse.Cloud.afterSave("GCUR_LOCATION", function(request, response) {
+Parse.Cloud.afterSave("GCUR_LOCATION", (request) => {
 	var objId = request.object.id;
 	var locName = request.object.get("LocationName");
 
@@ -508,7 +508,7 @@ Parse.Cloud.afterSave("GCUR_LOCATION", function(request, response) {
 		queryUser.equalTo("objectId", request.user.id);
 		
 		// Use the new "useMasterKey" option in the Parse Server Cloud Code to bypass ACLs or CLPs.
-		queryUser.first({ useMasterKey: true }).then(function (user) {
+		return queryUser.first({ useMasterKey: true }).then(function (user) {
 			var userName = user.get("username");
 			console.log("*** afterSave GCUR_LOCATION [" + locName + "] [" + objId + "] requested by _User [" + userName + "] [" + request.user.id + "]");
 		}, function(error) {
