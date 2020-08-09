@@ -399,25 +399,29 @@ Parse.Cloud.define("isLocationNameExist", async (request) => {
     }
 });
 
-Parse.Cloud.define("deleteUserByUsername", function(request, response) {
+/**
+ * Called by SignupServlet doPost if any one of the following steps fails
+ * // 1. createUser // 2. assignUserToRole
+ */
+Parse.Cloud.define("deleteUserByUsername", (request) => {
 	var username = request.params.username;
 	
 	// Check if the username exists before it gets deleted
 	var queryUser = new Parse.Query(Parse.User);
 	queryUser.equalTo("username", username);
 	queryUser.limit(1000);
-	queryUser.find({ useMasterKey: true }).then(function(results) {
+	return queryUser.find({ useMasterKey: true }).then(function(results) {
 		console.log(results.length + " _USER found for username [" + username + "]. Ready to be destroyed by the function deleteUserByUsername!");
 		return Parse.Object.destroyAll(results);
 	}, function(error) {
 		console.log("_USER table lookup failed");
-	    response.success(false);
+	    return false;
 	}).then(function() {
 		console.log('_USER record [' + username + '] successfully deleted.');
-		response.success(true);
+		return true;
 	}, function(error) {
 		console.log('Failed to delete _USER record[' + username + '].');
-		response.success(false);
+		return false;
 	});
 });
 
