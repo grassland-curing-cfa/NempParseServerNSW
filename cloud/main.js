@@ -933,20 +933,20 @@ Parse.Cloud.define("updateSharedByInfo", (request) => {
  * Removes all associated GCUR_OBSERVATION and GCUR_MMR_OBSERVER_LOCATION records
  *  when a GCUR_LOCATION is deleted
  */
-Parse.Cloud.afterDelete("GCUR_LOCATION", function(request) {
+Parse.Cloud.afterDelete("GCUR_LOCATION", (request) => {
 	console.log("afterDelete is called on GCUR_LOCATION");
 	
 	query = new Parse.Query("GCUR_OBSERVATION");
 	query.equalTo("Location", request.object);
 	query.limit(1000);
-	query.find().then(function(observations) {
+	return query.find().then(function(observations) {
 		return Parse.Object.destroyAll(observations);
 	}).then(function() {
 		console.log('All associated GCUR_OBSERVATION records for the deleted GCUR_LOCATION have been deleted.');
-		return Parse.Promise.as("Hello!");
+		return Promise.resolve("Hello!");
 	}, function(error) {
 		console.log('Failed to delete all associated GCUR_OBSERVATION records for the deleted GCUR_LOCATION.');
-		return Parse.Promise.as("Hello!");
+		return Promise.resolve("Hello!");
 	}).then(function() {
 		queryMMR = new Parse.Query("GCUR_MMR_OBSERVER_LOCATION");
 		queryMMR.equalTo("Location", request.object);
