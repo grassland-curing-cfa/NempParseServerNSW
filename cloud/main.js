@@ -2463,7 +2463,7 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustLocation", (request) => {
 	        console.log("Delete aborted because of " + error.message);
 	      }
 	      
-		response.error("Error: " + error.code + " " + error.message);
+		throw new Error("Error: " + error.code + " " + error.message);
 	}).then(function(objectList) {
 		// all the new GCUR_ADJUST_LOCATION objects were saved.
 		var newAdjustLocationIds = [];
