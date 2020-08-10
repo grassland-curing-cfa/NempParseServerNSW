@@ -2323,7 +2323,7 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustDistrict", (request) => {
 			AdjustDistrictsToBeSaved.push(newAdjustDistrict);
 		}
 		
-		return Parse.Object.saveAll(AdjustDistrictsToBeSaved);
+		return Parse.Object.saveAll(AdjustDistrictsToBeSaved, { useMasterKey: true });
 	}, function(error) {
 		// ERROR ON destroyAll()
 		// An error occurred while deleting one or more of the objects.
@@ -2399,7 +2399,7 @@ Parse.Cloud.define("getAdjustedCuringForLocations", async (request) => {
 /**
  * Called from Submit click on saveAdjustByLocationValues JS function on the adminTools.jsp page.
  */
-Parse.Cloud.define("createUpdateCurrGCURAdjustLocation", function(request, response) {
+Parse.Cloud.define("createUpdateCurrGCURAdjustLocation", (request) => {
 	
 	/*
 	 * An example of request parameter
@@ -2416,7 +2416,7 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustLocation", function(request, respo
 	var queryLocation = new Parse.Query("GCUR_ADJUST_LOCATION");
 	queryLocation.limit(1000);
 	queryLocation.equalTo("status", 0);	// All current GCUR_ADJUST_LOCATION records
-	queryLocation.find().then(function(results) {
+	return queryLocation.find().then(function(results) {
 		
 		// Do remove about all current GCUR_ADJUST_LOCATION records
 		return Parse.Object.destroyAll(results);
@@ -2447,7 +2447,7 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustLocation", function(request, respo
 			AdjustLocationsToBeSaved.push(newAdjustLocation);
 		}
 		
-		return Parse.Object.saveAll(AdjustLocationsToBeSaved);
+		return Parse.Object.saveAll(AdjustLocationsToBeSaved, { useMasterKey: true });
 	}, function(error) {
 		// ERROR ON destroyAll()
 		// An error occurred while deleting one or more of the objects.
