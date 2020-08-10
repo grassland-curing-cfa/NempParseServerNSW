@@ -16,7 +16,6 @@
     "underscore": "~1.8.3",
     "mailgun-js": "^0.7.7",
     "cors": "*",
-    "node-schedule": "~1.1.1",
     "turf": "~3.0.14"
   },
   "scripts": {

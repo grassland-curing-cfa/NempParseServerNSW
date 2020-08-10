@@ -17,7 +17,6 @@
  */
 
 var _ = require('underscore');
-var schedule = require('node-schedule');			// https://www.npmjs.com/package/node-schedule
 var turf = require('turf');							// https://www.npmjs.com/package/turf
 const { Error } = require('parse');
 
