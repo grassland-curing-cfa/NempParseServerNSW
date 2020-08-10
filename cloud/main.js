@@ -2912,7 +2912,7 @@ Parse.Cloud.define("getFinaliseModelDetail", (request) => {
  * Apply Validation By Exception if previous best curing reached 100%
  * Triggered by the applyValidationByException function in \NEMP_GC\Parse_synch\NSW_New_Mig\synch.py
  */
-Parse.Cloud.define("applyValidationByException", function(request, response) {
+Parse.Cloud.define("applyValidationByException", (request) => {
 	var startTime = new Date().getTime();
 	
 	var isValidationByException = false;
