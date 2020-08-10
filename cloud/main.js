@@ -2154,7 +2154,10 @@ Parse.Cloud.define("updateLinkedLocsForObserverByIds", (request) => {
 	});
 });
 
-Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
+/**
+ * Triggered by action= acceptAllObserverValues
+ */
+Parse.Cloud.define("acceptAllObserverCurings", (request) => {
 	var ALL_DISTRICT = "9999";		// If the districtNo == 9999, return all active locatons.
 	
 	var validatorObjId = request.params.validatorObjId;		// String
