@@ -13,17 +13,18 @@
               							NEMP-1-151: Remove unnecessary Parse.User.logIn(SUPERUSER, SUPERPASSWORD) and Parse.Cloud.useMasterKey() in the Cloud function
               				11/07/2018: Created two cloud functions: "automateRunModel" & "automateFinaliseData" on the Parse Server for automating RunModel and FinaliseData jobs
 							13/11/2018: Updated the getDataReport function to allow exporting current observations at any point of time
-							30/06/2020: Started to upgrade all Cloud functions to Parse-server 3.
+							30/06/2020: Started to upgrade all Cloud functions to Parse-server 3+.
+							10/08/2020: Finished upgrading all Cloud functions to Parse-server 3+.
  */
 
 var _ = require('underscore');
 var turf = require('turf');							// https://www.npmjs.com/package/turf
 const { Error } = require('parse');
 
-var SUPERUSER = process.env.SUPER_USER;
-var SUPERPASSWORD = process.env.SUPER_USER_PASS;
+//var SUPERUSER = process.env.SUPER_USER;
+//var SUPERPASSWORD = process.env.SUPER_USER_PASS;
 var NULL_VAL_INT = -1;
-var NULL_VAL_DBL = -1.0;
+//var NULL_VAL_DBL = -1.0;
  
 var APP_ID = process.env.APP_ID;
 var MASTER_KEY = process.env.MASTER_KEY;
@@ -1254,7 +1255,7 @@ Parse.Cloud.define("getAllSimpleMMRUserRoleForUser", async (request) => {
 			"userName": userName,
 			"roleStatusList": roleStatusList
 		}
-		
+
 		return roleStatsusForUser;
 	} catch (e) {
 		console.log(e);
@@ -1262,6 +1263,9 @@ Parse.Cloud.define("getAllSimpleMMRUserRoleForUser", async (request) => {
 	}
 });
 
+/**
+ * Show observation list after selecting a district or selecting all districts
+ */
 Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 	const ALL_DISTRICT = "9999";		// If the districtNo == 9999, return all active locatons.
 	
@@ -1270,37 +1274,6 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 	const districtNo = request.params.districtNo;		// If districtNo == "ALL_DISTRICT", get all active locations.
 	
 	const obsList = [];	// the output array for response
-	
-	/*
-	 * An example of result
-		{
-		  "result":[
-		    {
-		      "locationName":"AMBERLEY",
-		      "locationObjId":"4n0uDuAOOj",
-		      "locationStatus":"mandatory",
-		      "observationObjId":"6C52oI52HR",
-		      "prevOpsCuring":50,
-		      "validatorCuring":70
-		    },
-		    {
-		      "adminCuring":90,
-		      "areaCuring":50,
-		      "locationName":"BEERBURRUM",
-		      "locationObjId":"jiACvkSLiu",
-		      "locationStatus":"mandatory",
-		      "observationObjId":"CGoRi9cS29",
-		      "validatorCuring":100
-		    },
-		    {
-		      "locationName":"DALBY",
-		      "locationObjId":"Wux0DcvNEq",
-		      "locationStatus":"optional",
-		      "prevOpsCuring":90
-		    }
-		  ]
-		}
-	 */
 	
 	// if the user is of Observers role, we look into the MMR table first to fetch all Active locations associated
 	if (userRoleName == "Observers") {
@@ -1544,11 +1517,6 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 
 Parse.Cloud.define("getObsForInputToVISCA", (request) => {
 	var obsList = [];	// the output array for response
-	
-	/*
-	 * An example of result
-		
-	 */
 
 	var queryObservation = new Parse.Query("GCUR_OBSERVATION");
 	queryObservation.equalTo("ObservationStatus", 0);			// Current week's observations
@@ -1615,7 +1583,7 @@ Parse.Cloud.define("getObsForInputToVISCA", (request) => {
 					"fuelContinuity" : fuelContinuity,
 					"fuelQuantity" : fuelQuantity
 			};
-			console.log("*** " + locName + ". validatorCuring = " + validatorCuring + ". validatorFuelLoad = " + validatorFuelLoad)
+			//console.log("*** " + locName + ". validatorCuring = " + validatorCuring + ". validatorFuelLoad = " + validatorFuelLoad)
 			
 			obsList.push(obsJSON);
 			
@@ -1631,6 +1599,9 @@ Parse.Cloud.define("getObsForInputToVISCA", (request) => {
 	});
 });
 
+/**
+ * Triggered when user clicks Validate Observations to show District List and count of associated observations
+ */
 Parse.Cloud.define("getCountOfLocsForDistricts", async (request) => {	
 	const districtList = [];	// the output array for response
 	
@@ -1725,7 +1696,7 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", async (request) =
 	
 	const results = await queryObservation.find({ useMasterKey: true });
 	// results are JavaScript Array of GCUR_OBSERVATION objects
-	console.log("GCUR_OBSERVATION - find " + results.length + " records for GCUR_LOCATION " + locObjectId + ", " + locName);
+	//console.log("GCUR_OBSERVATION - find " + results.length + " records for GCUR_LOCATION " + locObjectId + ", " + locName);
 	
 	let returnedJSON = {
 		"locationObjId" : locObjectId,
@@ -1907,16 +1878,6 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", async (request) =
 				}
 		}
 			
-			// add additional observation attributes
-			/**
-			 * 	var currObservationObjectId, currObservationDate, currObserverObjectId, currObserverName;
-				var currPointCuring, currPointHeight, currPointCover, currPointFuelLoad, currAreaCuring, currAreaHeight, currAreaCover, currAreaFuelLoad, currRainfall, currRodObjectId, currComment, currUserFuelLoad, currFuelContinuity, currFuelQuantity;
-				var currValidationDate, currValidatorObjectId, currValidatorName, currValidatorCuring;
-				var currAdminDate, currAdminObjectId, currAdminName, currAdminCuring;
-				var prevObservationObjectId, prevPointCuring, prevPointHeight, prevPointCover, prevPointFuelLoad, prevAreaCuring, prevAreaHeight, prevAreaCover, prevAreaFuelLoad, prevRainfall, prevRodObjectId, prevUserFuelLoad, prevFuelContinuity, prevFuelQuantity;
-				var prevOpsCuring;
-			 */
-			
 		let currPrevObsDetails = {
 					"currObservationObjectId" : currObservationObjectId,
 					"currObservationDate" : currObservationDate,
@@ -2017,7 +1978,7 @@ Parse.Cloud.define("getAllLocationsWithLinkedStatusForObservers", async (request
 	queryLocation.limit(1000);
 	const locations = await queryLocation.find();
 
-	console.log("All locations count: " + locations.length);
+	//console.log("All locations count: " + locations.length);
 	for (let i = 0; i < locations.length; i++) {
 		const loc = {
 			"locationId" : locations[i].id,
@@ -2036,7 +1997,7 @@ Parse.Cloud.define("getAllLocationsWithLinkedStatusForObservers", async (request
 	const userName = user.get("username");
 	const firstName = user.get("firstName");
 	const lastName = user.get("lastName");
-	console.log("userName - " + userName);
+	//console.log("userName - " + userName);
 
 	const queryMMR = new Parse.Query("GCUR_MMR_OBSERVER_LOCATION");
 	queryMMR.include("Observer");
@@ -2083,7 +2044,7 @@ Parse.Cloud.define("updateLinkedLocsForObserverByIds", (request) => {
 	var newLinkedLocsIds = [];	// all new linked locations' Ids
 	
 	for (var i = 0; i < request.params.linkedLocsIds.length; i ++) {
-		console.log("New linked locations for Observer [" + observerObjId + "]: " + request.params.linkedLocsIds[i]["locId"]);
+		//console.log("New linked locations for Observer [" + observerObjId + "]: " + request.params.linkedLocsIds[i]["locId"]);
 		newLinkedLocsIds.push(request.params.linkedLocsIds[i]["locId"]);
 	}
 	
@@ -2165,12 +2126,12 @@ Parse.Cloud.define("acceptAllObserverCurings", (request) => {
 	var validatorObjId = request.params.validatorObjId;		// String
 	var districtNo = request.params.districtNo;				// If districtNo == ALL_DISTRICT, validate all active locations.
 	
-	console.log("*** acceptAllObserverCurings function called by Validator [" + validatorObjId + "]");
+	console.log("*** acceptAllObserverCurings called by Validator [" + validatorObjId + "]");
 	
 	var sessionToken = undefined;
 	if (request.user != undefined) {
 		sessionToken = request.user.getSessionToken();
-		console.log("* request.user.id = " + request.user.id);
+		//console.log("* request.user.id = " + request.user.id);
 	}
 	
 	var queryObservation = new Parse.Query("GCUR_OBSERVATION");
@@ -2304,7 +2265,7 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustDistrict", (request) => {
 		// Do remove about all current GCUR_ADJUST_DISTRICT records
 		return Parse.Object.destroyAll(results);
 	}).then(function() {
-		console.log("All current GCUR_ADJUST_DISTRICT (status = 0) records have been successfully deleted");
+		//console.log("All current GCUR_ADJUST_DISTRICT (status = 0) records have been successfully deleted");
 		
 		var AdjustDistrictsToBeSaved = [];
 		
@@ -2313,7 +2274,7 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustDistrict", (request) => {
 			var adjustedCuring = newAdjustByDistrictObjs[j]["adjustedCuring"];
 			var status = newAdjustByDistrictObjs[j]["status"];
 			
-			console.log("New AdjustByDistrict - [" + district + "]: " + adjustedCuring + ", " + status);
+			//console.log("New AdjustByDistrict - [" + district + "]: " + adjustedCuring + ", " + status);
 			
 			var GCUR_ADJUST_DISTRICT = Parse.Object.extend("GCUR_ADJUST_DISTRICT");
 			var newAdjustDistrict = new GCUR_ADJUST_DISTRICT();
@@ -2381,8 +2342,6 @@ Parse.Cloud.define("getAdjustedCuringForLocations", async (request) => {
 		
 		const adjustedDistance = adjustByLoc.get("adjustedDistance");
 		
-		//var status = adjustByLoc.get("status");
-		
 		const locAdjustedCuringObj = {
 				"locObjId": locationId,
 				"locName": locationName,
@@ -2393,7 +2352,7 @@ Parse.Cloud.define("getAdjustedCuringForLocations", async (request) => {
 		locAdjustedCuringList.push(locAdjustedCuringObj);
 	}
 
-	console.log(locAdjustedCuringList);
+	//console.log(locAdjustedCuringList);
 	return locAdjustedCuringList;	
 });
 
@@ -2422,7 +2381,7 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustLocation", (request) => {
 		// Do remove about all current GCUR_ADJUST_LOCATION records
 		return Parse.Object.destroyAll(results);
 	}).then(function() {
-		console.log("All current GCUR_ADJUST_LOCATION (status = 0) records have been successfully deleted");
+		//console.log("All current GCUR_ADJUST_LOCATION (status = 0) records have been successfully deleted");
 		
 		var AdjustLocationsToBeSaved = [];
 		
@@ -2432,7 +2391,7 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustLocation", (request) => {
 			var adjustedDistance = newAdjustByLocationObjs[j]["adjustedDistance"];
 			var status = newAdjustByLocationObjs[j]["status"];
 			
-			console.log("New AdjustByLocation to be added - [" + locObjId + "]: " + adjustedCuring + ", " + adjustedDistance + ", " + status);
+			//console.log("New AdjustByLocation to be added - [" + locObjId + "]: " + adjustedCuring + ", " + adjustedDistance + ", " + status);
 			
 			var GCUR_LOCATION = Parse.Object.extend("GCUR_LOCATION");
 			var location = new GCUR_LOCATION();
@@ -2636,104 +2595,6 @@ Parse.Cloud.define("getAllFinalisedDate", (request) => {
 
 /**
  * Get the downloadable observation report based on user-specified finalised model objectId
- * Deprecated
- 
-Parse.Cloud.define("getDataReport", function(request, response) {
-	var finalisedModelObjectId = request.params.finalisedModelObjectId;
-	
-	var returnedObsList = [];
-	
-	var queryFinaliseModel = new Parse.Query("GCUR_FINALISEMODEL");
-	queryFinaliseModel.equalTo("objectId", finalisedModelObjectId);
-	queryFinaliseModel.limit(1000);
-	queryFinaliseModel.first().then(function(finalisedModel) {
-		var createdAt = finalisedModel.createdAt;
-		
-		var year = createdAt.getFullYear();
-		var month = createdAt.getMonth();
-		var date = createdAt.getDate();
-		
-		// Get all observations with FinalisedDate ranging between startUTC and endUTC time period
-		var startUTC = new Date(Date.UTC(year, month, date, 0, 0, 0));
-		var endUTC = new Date(Date.UTC(year, month, date, 23, 59, 59));
-		
-		var queryObservation = new Parse.Query("GCUR_OBSERVATION");
-		queryObservation.greaterThan("FinalisedDate", startUTC);
-		queryObservation.lessThan("FinalisedDate", endUTC);
-		queryObservation.include("Location");
-		queryObservation.include("RateOfDrying");
-		queryObservation.limit(1000);
-		return queryObservation.find();
-	}).then(function(observations) {
-		for (var i = 0; i < observations.length; i ++) {
-			var location = undefined;
-			var locationName = undefined;
-			var lng = undefined;
-			var lat = undefined;
-			var areaCuring = undefined;
-			var validatorCuring = undefined;
-			var adminCuring = undefined;
-			var fuelContinuity = undefined;
-			var fuelQuantity = undefined;
-			var userFuelLoad = undefined;
-			var validatorFuelLoad = undefined;
-			var rainfall = undefined;
-			var rateOfDrying = undefined;
-			var comments = undefined;
-			
-			location = observations[i].get("Location");
-			locationName = location.get("LocationName");
-			lng = location.get("Lng");
-			lat = location.get("Lat");
-			
-			if (observations[i].has("AreaCuring"))
-				areaCuring = observations[i].get("AreaCuring");
-			if (observations[i].has("ValidatorCuring"))
-				validatorCuring = observations[i].get("ValidatorCuring");
-			if (observations[i].has("AdminCuring"))
-				adminCuring = observations[i].get("AdminCuring");
-			if (observations[i].has("FuelContinuity"))
-				fuelContinuity = observations[i].get("FuelContinuity");
-			if (observations[i].has("FuelQuantity"))
-				fuelQuantity = observations[i].get("FuelQuantity");
-			if (observations[i].has("UserFuelLoad"))
-				userFuelLoad = observations[i].get("UserFuelLoad");
-			if (observations[i].has("ValidatorFuelLoad"))
-				validatorFuelLoad = observations[i].get("ValidatorFuelLoad");
-			if (observations[i].has("Rainfall"))
-				rainfall =  observations[i].get("Rainfall");
-			if (observations[i].has("RateOfDrying"))
-				rateOfDrying = observations[i].get("RateOfDrying").get("rateOfDrying");
-			if (observations[i].has("Comments"))
-				comments = observations[i].get("Comments");
-			
-			var returnedObs = {
-					"locationName": locationName,
-					"lng": lng,
-					"lat": lat,
-					"areaCuring": areaCuring,
-					"validatorCuring": validatorCuring,
-					"adminCuring": adminCuring,
-					"fuelContinuity": fuelContinuity,
-					"fuelQuantity": fuelQuantity,
-					"userFuelLoad": userFuelLoad,
-					"validatorFuelLoad": validatorFuelLoad,
-					"rainfall": rainfall,
-					"rateOfDrying": rateOfDrying,
-					"comments": comments
-			};
-			returnedObsList.push(returnedObs);
-		}
-		
-	    response.success(returnedObsList);
-	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
-	});
-});
-*/
-
-/**
- * Get the downloadable observation report based on user-specified finalised model objectId
  */
 Parse.Cloud.define("getDataReport", (request) => {
 	var finalisedModelObjectId = request.params.finalisedModelObjectId;
@@ -2743,12 +2604,11 @@ Parse.Cloud.define("getDataReport", (request) => {
 	var promise = undefined;
 	var flagExportCurrObs = "Export current observations";
 	
-	
 	if (finalisedModelObjectId == "-9999") {
 		console.log("*** To export current observations at this point of time.");
 		promise = Promise.resolve(flagExportCurrObs);
 	} else {
-		console.log("*** To export previous finalised observations.");
+		//console.log("*** To export previous finalised observations.");
 		var queryFinaliseModel = new Parse.Query("GCUR_FINALISEMODEL");
 		queryFinaliseModel.equalTo("objectId", finalisedModelObjectId);
 		queryFinaliseModel.limit(1000);
@@ -2865,7 +2725,7 @@ Parse.Cloud.define("getDataReport", (request) => {
 Parse.Cloud.define("getFinaliseModelDetail", (request) => {
 	var inFinaliseModelObjId = null;
 	
-	console.log("Getting FinaliseModel Detail for ObjectId [" + request.params.finaliseModelObjId + "]");
+	//console.log("Getting FinaliseModel Detail for ObjectId [" + request.params.finaliseModelObjId + "]");
 	inFinaliseModelObjId = request.params.finaliseModelObjId;
 	
 	// Query GCUR_FINALISEMODEL class
@@ -3099,7 +2959,7 @@ Parse.Cloud.define("automateRunModel", (request) => {
 	var nowDt = new Date(new Date().toUTCString());
 	var today_utc_ts =  Date.UTC(nowDt.getUTCFullYear(), nowDt.getUTCMonth(), nowDt.getUTCDate(), 0, 0, 0);
 	var greaterThanDt = new Date(today_utc_ts);
-	console.log("Today starting at " + greaterThanDt);
+	//console.log("Today starting at " + greaterThanDt);
 	
 	var queryRunModel = new Parse.Query("GCUR_RUNMODEL");
 	queryRunModel.greaterThan("createdAt", greaterThanDt);
