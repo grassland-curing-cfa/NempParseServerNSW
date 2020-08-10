@@ -19,6 +19,7 @@
 var _ = require('underscore');
 var schedule = require('node-schedule');			// https://www.npmjs.com/package/node-schedule
 var turf = require('turf');							// https://www.npmjs.com/package/turf
+const { Error } = require('parse');
 
 var SUPERUSER = process.env.SUPER_USER;
 var SUPERPASSWORD = process.env.SUPER_USER_PASS;
@@ -2297,7 +2298,7 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustDistrict", (request) => {
 	var queryDistrict = new Parse.Query("GCUR_ADJUST_DISTRICT");
 	queryDistrict.limit(1000);
 	queryDistrict.equalTo("status", 0);	// All current GCUR_ADJUST_DISTRICT records
-	queryDistrict.find().then(function(results) {
+	return queryDistrict.find().then(function(results) {
 		
 		// Do remove about all current GCUR_ADJUST_DISTRICT records
 		return Parse.Object.destroyAll(results);
@@ -2338,7 +2339,7 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustDistrict", (request) => {
 	        console.log("Delete aborted because of " + error.message);
 	      }
 	      
-		response.error("Error: " + error.code + " " + error.message);
+		throw new Error("Error: " + error.code + " " + error.message);
 	}).then(function(objectList) {
 		// all the new GCUR_ADJUST_DISTRICT objects were saved.
 		var newAdjustDistrictIds = [];
