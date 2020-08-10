@@ -315,7 +315,7 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", async (request) => {
         '<p>NSW RFS Fire Behaviour Analysis Team <a href="' + RFS_FBA + '">' + RFS_FBA + '</a></p>' + 
         '<p><i>Note: This email has been generated automatically by ' + process.env.APP_NAME + '. Please do not reply to this email.</i></p>' + 
         '</body>' + 
-		'</html>
+		'</html>';
 
     const sentFeedback = await mailgun.messages().send({
         from: RFS_FBA,
