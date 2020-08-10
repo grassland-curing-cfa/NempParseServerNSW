@@ -430,7 +430,7 @@ Parse.Cloud.define("deleteUserByUsername", (request) => {
  * Populate all ShareBy{STATE} columns available by "True" beforeSave a new Observation is added
  */
 Parse.Cloud.beforeSave("GCUR_OBSERVATION", async (request) => {
-	console.log("*** beforeSave triggered - START");
+	//console.log("*** beforeSave triggered - START");
 	const objId = request.object.id;
 	const loc = request.object.get("Location");
 	
@@ -455,7 +455,7 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", async (request) => {
 	
 	// Adding a new GCUR_OBSERVATION object
 	if(request.object.isNew()) {
-		console.log("*** beforeSave: Adding a new Observation.");
+		//console.log("*** beforeSave: Adding a new Observation.");
 		const sharedJurisSettingsQ = new Parse.Query("GCUR_SHARED_JURIS_SETTINGS");
 		const sjsObjs = await sharedJurisSettingsQ.find();
 		for (let i = 0; i < sjsObjs.length; i ++) {
@@ -476,7 +476,7 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", async (request) => {
 	}
 	// Updating an existing GCUR_OBSERVATION object
 	else {
-		console.log("*** beforeSave: Updating an existing Observation. GCUR_OBSERVATION objectId = " + objId);
+		//console.log("*** beforeSave: Updating an existing Observation. GCUR_OBSERVATION objectId = " + objId);
 		if ( (newAreaCuring == undefined) && (newValidatorCuring == undefined) && (newAdminCuring == undefined) && (newValidatorFuelLoad == undefined) ) {
 			const queryObservation = new Parse.Query("GCUR_OBSERVATION");
 			queryObservation.equalTo("objectId", objId);
@@ -490,7 +490,7 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", async (request) => {
  * after a new Observation is added
  */
 Parse.Cloud.afterSave("GCUR_OBSERVATION", async (request) => {
-	console.log("*** afterSave triggered - START");
+	//console.log("*** afterSave triggered - START");
 	var objId = request.object.id;
 	var loc = request.object.get("Location");
 	var locObjId = loc.id;
@@ -773,7 +773,7 @@ Parse.Cloud.define("getSharedPrevCuringForStateForInputToVISCA", (request) => {
 						
 						var sharedByInfo = JSON.parse(obs[j].get("SharedBy"));
 						
-						var isSharedByState;
+						//var isSharedByState;
 						
 						for (var p = 0; p < sharedByInfo.length; p ++) {
 							if ( (sharedByInfo[p]["st"] == stateName) && (sharedByInfo[p]["sh"]) ) {
@@ -827,8 +827,8 @@ Parse.Cloud.define("getSharedPrevCuringForStateForInputToVISCA", (request) => {
 			searchWithin["features"][0]["geometry"]["coordinates"].push(bufferZonePntsForState);
 
 			var pointsToCheck = {
-					"type": "FeatureCollection",
-					"features": []
+				"type": "FeatureCollection",
+				"features": []
 			};
 			
 			for (var j = 0; j < sharedObsArr.length; j++) {
@@ -837,12 +837,12 @@ Parse.Cloud.define("getSharedPrevCuringForStateForInputToVISCA", (request) => {
 				var lng = sharedObsArr[j]["lng"];
 				
 				var featureObj = {
-						"type": "Feature",
-					    "properties": {"obsObjId" : obsObjId},
-					    "geometry": {
-					    	"type": "Point",
-					    	"coordinates": [lng, lat]
-					    }
+					"type": "Feature",
+					"properties": {"obsObjId" : obsObjId},
+					"geometry": {
+					    "type": "Point",
+					    "coordinates": [lng, lat]
+					}
 				};
 				
 				pointsToCheck["features"].push(featureObj);
@@ -920,7 +920,6 @@ Parse.Cloud.define("updateSharedByInfo", (request) => {
 			}
 		}
 		return Parse.Object.saveAll(obs, { useMasterKey: true });
-		//return response.success();
 	}).then(function(obsList) {
 		// All the objects were saved.
 		console.log("Updated SharedBy column on GCUR_OBSERVATION table. Updated obs count: " + obsList.length);
@@ -1011,12 +1010,12 @@ Parse.Cloud.beforeDelete("GCUR_RUNMODEL", async (request) => {
 	console.log(fileName);
 	
     const httpResponse = await Parse.Cloud.httpRequest({
-      method: 'DELETE',
-      url: SERVER_URL + "/files/" + fileName,
-      headers: {
-        "X-Parse-Application-Id": APP_ID,
-        "X-Parse-Master-Key" : MASTER_KEY
-	  }
+		method: 'DELETE',
+		url: SERVER_URL + "/files/" + fileName,
+		headers: {
+			"X-Parse-Application-Id": APP_ID,
+			"X-Parse-Master-Key" : MASTER_KEY
+		}
 	});
 	  
 	console.log('Deleted the file associated with the RunModel job successfully.');
@@ -1101,7 +1100,7 @@ Parse.Cloud.define("getRunModelDetails", (request) => {
 	var outRunModelDetails = [];
 	
 	for (var i = 0; i < request.params.runModelObjIds.length; i ++) {
-		console.log("Getting RunModel Details for ObjectId [" + request.params.runModelObjIds[i]["objectId"] + "]");
+		//console.log("Getting RunModel Details for ObjectId [" + request.params.runModelObjIds[i]["objectId"] + "]");
 		inRunModelObjList.push(request.params.runModelObjIds[i]["objectId"]);
 	}
 	
@@ -1207,41 +1206,41 @@ Parse.Cloud.define("getAllSimpleMMRUserRoleForRole", async (request) => {
 	 return userStatsusForRole;
 });
 
+/**
+ * Login and navigate to Home page
+ */
 Parse.Cloud.define("getAllSimpleMMRUserRoleForUser", async (request) => {
-	var userObjectId = request.params.objectId;
-	var userName = null;
+	const userObjectId = request.params.objectId;
 	
 	try {
-	
-		var queryUser = new Parse.Query(Parse.User);
+		const queryUser = new Parse.Query(Parse.User);
 		queryUser.equalTo("objectId", userObjectId);
 		const user = await queryUser.first({ useMasterKey: true });
-		userName = user.get("username");
+		const userName = user.get("username");
 		const queryMMR = new Parse.Query("GCUR_MMR_USER_ROLE");
-		// Include the post data with each comment
 		queryMMR.include("user");
 		queryMMR.include("role");
 		queryMMR.limit(1000);
 		const results = await queryMMR.find({ useMasterKey: true });
-		var roleStatsusForUser = null;
-		var roleStatusList = []
-			  
-		for (var i = 0; i < results.length; i++) {
 
-	        var this_user = results[i].get("user");
-	        var usrObjId = this_user.id;
+		const roleStatusList = []
+			  
+		for (let i = 0; i < results.length; i++) {
+
+	        const this_user = results[i].get("user");
+	        const usrObjId = this_user.id;
 	        if (usrObjId == userObjectId) {
-	        	var role = results[i].get("role");
-	            var roleName = role.get("name");
-	            var roleObjId = role.id;
-	            var simpleRole = {
+	        	const role = results[i].get("role");
+	            const roleName = role.get("name");
+	            const roleObjId = role.id;
+	            const simpleRole = {
 	              "objectId": roleObjId,
 	    		  "roleName": roleName
 	    	    };
 	            
-	            var status = results[i].get("status");
+	            const status = results[i].get("status");
 	            
-	            var roleStatus = {
+	            const roleStatus = {
 	              "simpleRole": simpleRole,
 	              "status": status
 	            };
@@ -1249,11 +1248,13 @@ Parse.Cloud.define("getAllSimpleMMRUserRoleForUser", async (request) => {
 	            roleStatusList.push(roleStatus);
 	        }
 		}
-		roleStatsusForUser = {
-				"userObjectId": userObjectId,
-				"userName": userName,
-				"roleStatusList": roleStatusList
+
+		const roleStatsusForUser = {
+			"userObjectId": userObjectId,
+			"userName": userName,
+			"roleStatusList": roleStatusList
 		}
+		
 		return roleStatsusForUser;
 	} catch (e) {
 		console.log(e);
