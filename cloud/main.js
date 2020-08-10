@@ -285,7 +285,8 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", async (request) => {
         const status = results[i].get("status");
         if (status && (role.get("name") == "Observers")) {
             const user = results[i].get("user");
-            const email = user.get("email");
+			const email = user.get("email");
+			console.log("*** " + email);
             recipientList = recipientList + email + ";";
         }
 	}
@@ -294,8 +295,7 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", async (request) => {
     const mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
          
     const strToday = getTodayString(_IS_DAYLIGHT_SAVING);
-	
-	/*
+         
     const html = '<!DOCTYPE html><html>' +
         '<body>' + 
         'Hello all,' + 
@@ -304,25 +304,13 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", async (request) => {
         '<p>NSW RFS Fire Behaviour Analysis Team <a href="' + RFS_FBA + '">' + RFS_FBA + '</a></p>' + 
         '<p><i>Note: This email has been generated automatically by ' + process.env.APP_NAME + '. Please do not reply to this email.</i></p>' + 
         '</body>' + 
-		'</html>';
-		*/
-	const html = '<!DOCTYPE html><html>' +
-        '<body>' + 
-        'Hello all,' + 
-        '<p>Please disregard the email that was sent early for 10/08/2020 Grassland Curing Map. It was mistakenly sent to the wrong group while we are in the process of making a few upgrades to the Grass Fuel Portal.</p>' + 
-		'<p>We sincerely apologise for any confusion this may have caused.</p>' + 
-		'<p>Kind Regards,</p>' + 
-        '<p>NSW RFS Fire Behaviour Analysis Team <a href="' + RFS_FBA + '">' + RFS_FBA + '</a></p>' + 
-        '<p><i>Note: This email has been generated automatically by ' + process.env.APP_NAME + '. Please do not reply to this email.</i></p>' + 
-        '</body>' + 
-		'</html>';
+        '</html>';
 
     const sentFeedback = await mailgun.messages().send({
         from: RFS_FBA,
     	to: RFS_FBA + ";" + process.env.ADDITIONAL_EMAILS_FOR_FINALISED_MAP,
 		bcc: CFA_NEMP_EMAIL + ";" + CFA_GL_EMAIL + ";" + CFA_GL_TEAM_EMAIL,
-		//subject: "New South Wales Grassland Curing Map - " + strToday,
-		subject: "Grass Fuel Portal upgrade",
+        subject: "New South Wales Grassland Curing Map - " + strToday,
         text: '',
         html: html
 	});
