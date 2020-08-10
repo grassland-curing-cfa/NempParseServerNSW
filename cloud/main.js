@@ -49,7 +49,7 @@ Parse.Cloud.define("hello", (request) => {
   return "Hello world from " + process.env.APP_NAME;
 });
  
-Parse.Cloud.define("getDateInAEST", function(request, response) {
+Parse.Cloud.define("getDateInAEST", (request) => {
     var currentDateInAEST = getTodayString(_IS_DAYLIGHT_SAVING);
     return "_IS_DAYLIGHT_SAVING is " + _IS_DAYLIGHT_SAVING + "; Current Date in AEST: '" + currentDateInAEST + "'";
 });
@@ -2280,7 +2280,7 @@ Parse.Cloud.define("getAdjustedCuringForAllDistricts", async (request) => {
 /**
  * Called from Submit click on saveAdjustByDistrictValues JS function on the adminTools.jsp page.
  */
-Parse.Cloud.define("createUpdateCurrGCURAdjustDistrict", function(request, response) {
+Parse.Cloud.define("createUpdateCurrGCURAdjustDistrict", (request) => {
 	
 	/*
 	 * An example of request parameter
@@ -2408,7 +2408,7 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustLocation", function(request, respo
 	 * 	{"status":0,"adjustedCuring":60,"adjustedDistance":72,"locObjId":"CvyfGSYArB"}]
 	 * }
 	 */
-	
+	console.log("*** Cloud fucntion createUpdateCurrGCURAdjustLocation called");
 	var newAdjustByLocationObjs = request.params.newAdjustByLocationObjs;
 	
 	// Remove all the existing current GCUR_ADJUST_LOCATION records from the GCUR_ADJUST_LOCATION class
