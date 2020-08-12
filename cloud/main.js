@@ -292,32 +292,36 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", async (request) => {
         }
 	}
          
-    // use Mailgun to send email
-    const mailgun = require('mailgun-js')({apiKey: "MG_KEY", domain: MG_DOMAIN});
-         
-    const strToday = getTodayString(_IS_DAYLIGHT_SAVING);
-         
-    const html = '<!DOCTYPE html><html>' +
-        '<body>' + 
-        'Hello all,' + 
-        '<p>The NSW grassland curing map has been updated for the ' + strToday + '. To view the map, please click <a href="' + GAE_APP_URL + '/viscaModel?action=grasslandCuringMap">here</a>.</p>' + 
-        '<p>Kind Regards,</p>' + 
-        '<p>NSW RFS Fire Behaviour Analysis Team <a href="' + RFS_FBA + '">' + RFS_FBA + '</a></p>' + 
-        '<p><i>Note: This email has been generated automatically by ' + process.env.APP_NAME + '. Please do not reply to this email.</i></p>' + 
-        '</body>' + 
-        '</html>';
+	// use Mailgun to send email
+	try {
+		const mailgun = require('mailgun-js')({apiKey: "MG_KEY", domain: MG_DOMAIN});
+			
+		const strToday = getTodayString(_IS_DAYLIGHT_SAVING);
+			
+		const html = '<!DOCTYPE html><html>' +
+			'<body>' + 
+			'Hello all,' + 
+			'<p>The NSW grassland curing map has been updated for the ' + strToday + '. To view the map, please click <a href="' + GAE_APP_URL + '/viscaModel?action=grasslandCuringMap">here</a>.</p>' + 
+			'<p>Kind Regards,</p>' + 
+			'<p>NSW RFS Fire Behaviour Analysis Team <a href="' + RFS_FBA + '">' + RFS_FBA + '</a></p>' + 
+			'<p><i>Note: This email has been generated automatically by ' + process.env.APP_NAME + '. Please do not reply to this email.</i></p>' + 
+			'</body>' + 
+			'</html>';
 
-    const sentFeedback = await mailgun.messages().send({
-        from: RFS_FBA,
-    	//to: RFS_FBA + ";" + process.env.ADDITIONAL_EMAILS_FOR_FINALISED_MAP,
-		to: "a.chen@cfa.vic.gov.au",
-		//bcc: CFA_NEMP_EMAIL + ";" + CFA_GL_EMAIL + ";" + CFA_GL_TEAM_EMAIL,
-        subject: "New South Wales Grassland Curing Map - " + strToday,
-        text: '',
-        html: html
-	});
-	
-	return JSON.stringify(sentFeedback);
+		const sentFeedback = await mailgun.messages().send({
+			from: RFS_FBA,
+			//to: RFS_FBA + ";" + process.env.ADDITIONAL_EMAILS_FOR_FINALISED_MAP,
+			to: "a.chen@cfa.vic.gov.au",
+			//bcc: CFA_NEMP_EMAIL + ";" + CFA_GL_EMAIL + ";" + CFA_GL_TEAM_EMAIL,
+			subject: "New South Wales Grassland Curing Map - " + strToday,
+			text: '',
+			html: html
+		});
+
+		return sentFeedback;
+	} catch (e) {
+        throw new Error(e);
+    }
 });
 
 //export a list of email addresses for all active users
