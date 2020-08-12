@@ -293,7 +293,7 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", async (request) => {
 	}
          
     // use Mailgun to send email
-    const mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
+    const mailgun = require('mailgun-js')({apiKey: "MG_KEY", domain: MG_DOMAIN});
          
     const strToday = getTodayString(_IS_DAYLIGHT_SAVING);
          
