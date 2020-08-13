@@ -320,7 +320,7 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", async (request) => {
 
 		return sentFeedback;
 	} catch (e) {
-        throw new Error(e);
+        throw 'Error in sending email via Mailgun. Details: ' + e;
     }
 });
 
