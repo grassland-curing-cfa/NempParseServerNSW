@@ -271,6 +271,7 @@ Parse.Cloud.define("sendEmailWelcomeNewUser", (request) => {
  
 //Send an email via Mailgun with finalised curing map to FBA
 Parse.Cloud.define("sendEmailFinalisedDataToObservers", async (request) => {
+	/*
     // get all active observers
     let recipientList = "";
      
@@ -291,6 +292,7 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", async (request) => {
             recipientList = recipientList + email + ";";
         }
 	}
+	*/
          
 	// use Mailgun to send email
 	try {
@@ -310,9 +312,9 @@ Parse.Cloud.define("sendEmailFinalisedDataToObservers", async (request) => {
 
 		const sentFeedback = await mailgun.messages().send({
 			from: RFS_FBA,
-			//to: RFS_FBA + ";" + process.env.ADDITIONAL_EMAILS_FOR_FINALISED_MAP,
-			to: "a.chen@cfa.vic.gov.au",
-			//bcc: CFA_NEMP_EMAIL + ";" + CFA_GL_EMAIL + ";" + CFA_GL_TEAM_EMAIL,
+			to: RFS_FBA + ";" + process.env.ADDITIONAL_EMAILS_FOR_FINALISED_MAP,
+			//to: "a.chen@cfa.vic.gov.au",
+			bcc: CFA_NEMP_EMAIL + ";" + CFA_GL_EMAIL + ";" + CFA_GL_TEAM_EMAIL,
 			subject: "New South Wales Grassland Curing Map - " + strToday,
 			text: '',
 			html: html
