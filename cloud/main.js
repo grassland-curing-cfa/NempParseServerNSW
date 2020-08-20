@@ -975,8 +975,6 @@ Parse.Cloud.afterDelete("GCUR_LOCATION", (request) => {
  *  when a Parse.User row is deleted
  */
 Parse.Cloud.afterDelete(Parse.User, (request) => {
-	console.log("afterDelete is called on _User");
-	
 	var mmrObsvrLocsCount;
 	var mmrUsrRoleCount;
 	query = new Parse.Query("GCUR_MMR_OBSERVER_LOCATION");
