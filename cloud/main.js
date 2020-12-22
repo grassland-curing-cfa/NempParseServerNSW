@@ -47,7 +47,7 @@ var SUPERUSER_OBJECTID = "AucN1rSA60";
 // Use Parse.Cloud.define to define as many cloud functions as you want.
 // For example:
 Parse.Cloud.define("hello", (request) => {
-	return Promise.resolve("Hello world from " + process.env.APP_NAME);
+	return Promise.resolve("Hello world from  " + process.env.APP_NAME);
 });
  
 Parse.Cloud.define("getDateInAEST", (request) => {
