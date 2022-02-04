@@ -1289,7 +1289,7 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 		queryMMR.include("Location");
 		queryMMR.limit(1000);
 		const mmrResults = await queryMMR.find({ useMasterKey: true });
-		console.log("*** FLAG 2", mmrReslts.length);
+		console.log("*** FLAG 2", mmrResults.length);
 		for (let i = 0; i < mmrResults.length; i ++) {
 			const mmr = mmrResults[i];
 			const observer = mmr.get("Observer");
