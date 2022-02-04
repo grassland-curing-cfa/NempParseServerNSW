@@ -1289,7 +1289,7 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 		queryMMR.include("Location");
 		queryMMR.limit(5000);
 		const mmrResults = await queryMMR.find({ useMasterKey: true });
-		console.log("*** mmrResults len", mmrResults.length);
+		
 		for (let i = 0; i < mmrResults.length; i ++) {
 			const mmr = mmrResults[i];
 			const observer = mmr.get("Observer");
@@ -2007,7 +2007,7 @@ Parse.Cloud.define("getAllLocationsWithLinkedStatusForObservers", async (request
 	const queryMMR = new Parse.Query("GCUR_MMR_OBSERVER_LOCATION");
 	queryMMR.include("Observer");
 	queryMMR.include("Location");
-	queryMMR.limit(1000);
+	queryMMR.limit(5000);
 	const mmrResults = await queryMMR.find({ useMasterKey: true });
 
 	for (let i = 0; i < mmrResults.length; i++) {
@@ -2056,7 +2056,7 @@ Parse.Cloud.define("updateLinkedLocsForObserverByIds", (request) => {
 	var queryMMR = new Parse.Query("GCUR_MMR_OBSERVER_LOCATION");
 	queryMMR.include("Observer");
 	queryMMR.include("Location");
-	queryMMR.limit(1000);
+	queryMMR.limit(5000);
 	return queryMMR.find({ useMasterKey: true }).then(function(results) {
 		for (var i = 0; i < results.length; i ++) {
 			var user = results[i].get("Observer");
