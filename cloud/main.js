@@ -1283,11 +1283,11 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 	// if the user is of Observers role, we look into the MMR table first to fetch all Active locations associated
 	if (userRoleName == "Observers") {
 		
-		const queryMMR = new Parse.Query("mmrResults");
+		const queryMMR = new Parse.Query("GCUR_MMR_OBSERVER_LOCATION");
 		// Include the Observer and Location data with each GCUR_MMR_OBSERVER_LOCATION
 		queryMMR.include("Observer");
 		queryMMR.include("Location");
-		queryMMR.limit(1000);
+		queryMMR.limit(5000);
 		const mmrResults = await queryMMR.find({ useMasterKey: true });
 		console.log("*** mmrResults len", mmrResults.length);
 		for (let i = 0; i < mmrResults.length; i ++) {
@@ -1403,7 +1403,7 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 	} else {
 		const queryLocation = new Parse.Query("GCUR_LOCATION");
 		queryLocation.ascending("LocationName");
-		queryLocation.limit(1000);
+		queryLocation.limit(5000);
 		const locationResults = await queryLocation.find();
 		
 		for (let i = 0; i < locationResults.length; i ++) {
