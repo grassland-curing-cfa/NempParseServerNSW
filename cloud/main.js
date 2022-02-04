@@ -47,7 +47,7 @@ var SUPERUSER_OBJECTID = "AucN1rSA60";
 // Use Parse.Cloud.define to define as many cloud functions as you want.
 // For example:
 Parse.Cloud.define("hello", (request) => {
-	return Promise.resolve("Hello world from " + process.env.APP_NAME);
+	return Promise.resolve("Hello world from  " + process.env.APP_NAME);
 });
  
 Parse.Cloud.define("getDateInAEST", (request) => {
@@ -1282,14 +1282,14 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 	
 	// if the user is of Observers role, we look into the MMR table first to fetch all Active locations associated
 	if (userRoleName == "Observers") {
-		console.log("*** FLAG 1");
-		const queryMMR = new Parse.Query("GCUR_MMR_OBSERVER_LOCATION");
+		
+		const queryMMR = new Parse.Query("mmrResults");
 		// Include the Observer and Location data with each GCUR_MMR_OBSERVER_LOCATION
 		queryMMR.include("Observer");
 		queryMMR.include("Location");
 		queryMMR.limit(1000);
 		const mmrResults = await queryMMR.find({ useMasterKey: true });
-		console.log("*** FLAG 2", mmrResults.length);
+		console.log("*** mmrResults len", mmrResults.length);
 		for (let i = 0; i < mmrResults.length; i ++) {
 			const mmr = mmrResults[i];
 			const observer = mmr.get("Observer");
@@ -1297,8 +1297,6 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 			
 			// when Observer matches the param
 			if (observerObjId == userObjectId) {
-				console.log("*** FLAG 3");
-
 				const location = mmr.get("Location");
 				const locationObjId = location.id;
 				const locationName = location.get("LocationName");
@@ -1327,9 +1325,7 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 					queryObservation.notEqualTo("ObservationStatus", 2);						// excludes the archived observation
 					queryObservation.ascending("ObservationStatus");							// this enables fetching current(0) and previous(1) observations in order
 					const results = await queryObservation.find({ useMasterKey: true });		// results are JavaScript Array of GCUR_OBSERVATION objects						
-					
-					console.log("*** FLAG 4", results.length);
-
+						
 					let observationObjId, areaCuring, validatorCuring, adminCuring, validated;
 					let prevOpsCuring;
 					let userFuelLoad;
@@ -1398,7 +1394,7 @@ Parse.Cloud.define("getSimpleObservationsForUser", async (request) => {
 						"prevOpsCuring": prevOpsCuring,
 						"userFuelLoad": userFuelLoad
 					};
-					console.log("FLAG 5");
+					
 					obsList.push(obs);
 				}
 			}
